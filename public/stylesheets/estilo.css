@@ -1,0 +1,31 @@
+/*
+	Estilo de la palabra libreware
+*/
+
+.libre{
+	color:#437eac;
+	font-style:italic;
+	font-weight:bold;
+	margin-right:2px;
+}
+
+.ware{
+	color:#646f77;
+	font-weight:bold;
+}
+
+
+
+.tituloDeSitio{
+	font-weight:bold;
+	font-size:110%;
+}
+
+.cabecera{
+	font-size:450%;
+	margin:80px 0px 80px 110px;
+	padding:50px;
+	text-shadow:8px 14px 20px #777;
+	line-height: 50px;
+	letter-spacing:10px;
+}
