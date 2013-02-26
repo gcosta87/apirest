@@ -5,7 +5,7 @@
 // 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
+// the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 // 
 // This program is distributed in the hope that it will be useful,
@@ -20,7 +20,7 @@
 
 superagent=require('superagent')
 cheerio=require('cheerio')
-
+funcionesDeServicios=require('../recursos/funcionesDeServicios.js')
 
 //	CONSTANTES
 //
@@ -33,33 +33,49 @@ tipoDeDivisas={
 //	FUNCIONES PRIVADAS
 //
 
-// TO-DO: funciones que retorner a partir de un O cualquiera su formato JSON, Debug (inspect), TXT(similar al Debug pero con saltos de linea)...
-
-// TO-DO: funcion "switch" que invoque a la funcion correspondiente segun el parametro de formato de resp. Default =JSON
-
-
-
 
 //	FUNCIONES PUBLICAS
 //
 
-//Implementacion del Servicios de Divisas: Dolar, Dolar Blue...
+//Implementación del Servicios de Divisas: Dolar, Dolar Blue...
+//Estado borrador
 exports.divisas=function(req,res){
 	divisa=tipoDeDivisas[req.params.divisa];
 	
 	if(divisa){
 		superagent
 			.get('http://ambito.com/economia/mercados/monedas/dolar/')
+			.on('error', function(){
+				console.log('Se ha producido un Error interno al consultar	[on(\'Error\')]')
+				res.send('500','Se ha producido un Error interno al consultar');
+				
+			})
 			.end(function(respuesta){
-				$=cheerio.load(respuesta.text)
-				
-				dolarVariacion=$('.variacion',divisa.elementoHTML).text()
-				dolarCompra=$('.ultimo big',divisa.elementoHTML).text()
-				dolarVenta=$('.cierreAnterior big',divisa.elementoHTML).text()
-				ultimaActualizacion=$('.dolarFecha big',divisa.elementoHTML).text()
-				
-				res.send('Divisa: '+divisa.nombre+'<br/>Compra: '+dolarCompra+'<br/>Venta: '+dolarVenta+'<br/>Variacion: '+dolarVariacion+'<br/>Última actualización: '+ultimaActualizacion+'<br/>Fuente: Ambito.com');
-				
+				if(!respuesta.error){
+					$=cheerio.load(respuesta.text)
+					
+					dolarVariacion=$('.variacion',divisa.elementoHTML).text()
+					dolarCompra=$('.ultimo big',divisa.elementoHTML).text()
+					dolarVenta=$('.cierreAnterior big',divisa.elementoHTML).text()
+					ultimaActualizacion=$('.dolarFecha big',divisa.elementoHTML).text()
+					
+					objetoDivisa={
+						nombre:			divisa.nombre,
+						venta:			funcionesDeServicios.convertirEnFloat(dolarVenta),
+						compra:			funcionesDeServicios.convertirEnFloat(dolarCompra),
+						variacion:		funcionesDeServicios.convertirEnFloat(dolarVariacion),
+						actualizacion:	ultimaActualizacion,
+						fuente:			'Ambito.com'
+					};
+									
+					//~ res.send('Divisa: '+divisa.nombre+'<br/>Compra: '+dolarCompra+'<br/>Venta: '+dolarVenta+'<br/>Variacion: '+dolarVariacion+'<br/>Última actualización: '+ultimaActualizacion+'<br/>Fuente: Ambito.com');
+					res.send(funcionesDeServicios.formatoDebug(objetoDivisa));
+					
+				}
+				else{
+					console.log('Se ha producido un error en el servicio consultado (404 o 500)');
+					res.send('Error: el servicio consultado ha informado un error:\n'+respuesta.error);
+				}
 			});	
 	}
 	else{
