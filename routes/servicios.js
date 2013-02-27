@@ -21,6 +21,7 @@
 superagent=require('superagent')
 cheerio=require('cheerio')
 funcionesDeServicios=require('../recursos/funcionesDeServicios.js')
+util=require('util');
 
 //	CONSTANTES
 //
@@ -43,40 +44,33 @@ exports.divisas=function(req,res){
 	divisa=tipoDeDivisas[req.params.divisa];
 	
 	if(divisa){
-		superagent
-			.get('http://ambito.com/economia/mercados/monedas/dolar/')
-			.on('error', function(){
-				console.log('Se ha producido un Error interno al consultar	[on(\'Error\')]')
-				res.send('500','Se ha producido un Error interno al consultar');
-				
-			})
-			.end(function(respuesta){
-				if(!respuesta.error){
-					$=cheerio.load(respuesta.text)
-					
-					dolarVariacion=$('.variacion',divisa.elementoHTML).text()
-					dolarCompra=$('.ultimo big',divisa.elementoHTML).text()
-					dolarVenta=$('.cierreAnterior big',divisa.elementoHTML).text()
-					ultimaActualizacion=$('.dolarFecha big',divisa.elementoHTML).text()
-					
-					objetoDivisa={
-						nombre:			divisa.nombre,
-						venta:			funcionesDeServicios.convertirEnFloat(dolarVenta),
-						compra:			funcionesDeServicios.convertirEnFloat(dolarCompra),
-						variacion:		funcionesDeServicios.convertirEnFloat(dolarVariacion),
-						actualizacion:	ultimaActualizacion,
-						fuente:			'Ambito.com'
-					};
-									
-					//~ res.send('Divisa: '+divisa.nombre+'<br/>Compra: '+dolarCompra+'<br/>Venta: '+dolarVenta+'<br/>Variacion: '+dolarVariacion+'<br/>Última actualización: '+ultimaActualizacion+'<br/>Fuente: Ambito.com');
-					res.send(funcionesDeServicios.formatoDebug(objetoDivisa));
-					
-				}
-				else{
-					console.log('Se ha producido un error en el servicio consultado (404 o 500)');
-					res.send('Error: el servicio consultado ha informado un error:\n'+respuesta.error);
-				}
-			});	
+		funcionesDeServicios.peticionGET(req,res,'http://ambito.com/economia/mercados/monedas/dolar/',function(respuesta){			
+			$=cheerio.load(respuesta)
+			
+			//Obtengo los valores
+			// TO-DO:	Optimizar las consultas. Averguar de setar "root"
+			dolarVariacion=$('.variacion',divisa.elementoHTML).text()
+			dolarCompra=$('.ultimo big',divisa.elementoHTML).text()
+			dolarVenta=$('.cierreAnterior big',divisa.elementoHTML).text()
+			ultimaActualizacion=$('.dolarFecha big',divisa.elementoHTML).text()
+		
+			// Construyo el objeto de respuesta
+			objetoDivisa={
+				nombre:			divisa.nombre,
+				venta:			funcionesDeServicios.convertirEnFloat(dolarVenta),
+				compra:			funcionesDeServicios.convertirEnFloat(dolarCompra),
+				variacion:		funcionesDeServicios.convertirEnFloat(dolarVariacion),
+				actualizacion:	ultimaActualizacion,						
+				fuente:{
+						nombre:		'Ambito.com',
+						url:		'http://www.ambito.com'								
+					}
+			};
+			
+			// Envio la respuesta al usuario segun el formato que el haya elegido		
+			funcionesDeServicios.selectorDeFormato(req,res,objetoDivisa)
+		});
+		
 	}
 	else{
 		res.send('404','No existe la divisa solicitada: '+req.params.divisa+'<br/><br/>Solo puede consultar:<ul><li><a href="/api/divisas/dolar">dolar</a><li><a href="/api/divisas/dolarBlue">dolarBlue</a><li><a href="/api/divisas/dolarMayorista">dolarMayorista</a></ul>')
