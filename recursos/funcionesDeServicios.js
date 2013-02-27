@@ -21,15 +21,30 @@
 
 //	Modulo que contiene funciones comunes para todos los servicios
 
+
 util=require('util');
 
+//	CONSTANTES/GLOBALES
+//
+
+//arreglo asociativo, donde estan los parametros esperados y la funcion correspondiente de conversion
+//"Default" es alias/sinonimo de JSON
+formatosDeRespuesta={
+	'json':	formatoJSON,
+	'debug':	formatoDebug,
+	'txt':		formatoTXT,
+	'csv':		formatoCSV,
+	'default':	formatoJSON
+}
+
+
 //	Implementacion base de las funciones de formato
-exports.formatoJSON=function (objeto){
+function formatoJSON(objeto){
 	return JSON.stringify(objeto)
 }
 
 // Formato Unix. Se espera un Objeto simple (sin atributos compuestos)
-exports.formatoTXT=function (objeto){
+function formatoTXT(objeto){
 	var resultado="";
 
 	for (atributo in objeto){
@@ -38,10 +53,6 @@ exports.formatoTXT=function (objeto){
 	return resultado;
 }
 
-// 
-// name: desconocido
-// @param
-// @return
 
 function formatoDebug(objeto){
 	var resultado="{<ul style='list-style-type:none;margin:0px;'>";
@@ -58,10 +69,10 @@ function formatoDebug(objeto){
 	}
 	return resultado+"</ul>}";
 }
-exports.formatoDebug=formatoDebug;
+
 
 // TO-DO: faltaría examinar el escape de las comillas dobles (o no)
-exports.formatoCSV=function (objeto){
+function formatoCSV(objeto){
 	var cabecera="";
 	var resultado="";
 
@@ -82,8 +93,31 @@ exports.formatoCSV=function (objeto){
 	return cabecera+'\n'+resultado;
 }
 
+//	FUNCIONES PÚBLICAS
+//
 
 // TO-DO: función "switch" que invoque a la función correspondiente según el parámetro de formato de resp. Default=JSON
+// 
+// name: selectorDeFormato
+// @param res:	parametro para enviar la respuesta directa al usuario
+// @param req: parametro para saber que formato se solicito (req.query.format)
+// @param objeto: objeto que se desea enviar
+
+exports.selectorDeFormato= function (req,res,objeto){
+	if(req.query.formato){
+		formato=formatosDeRespuesta[req.query.formato.toLowerCase()];
+		if(formato){
+			res.send(formato(objeto))
+		}
+		else{
+			res.send('404', 'Error: el formato especificado no existe')
+		}			
+	}
+	else{
+		// Formato Default
+		res.send(formatoJSON(objeto))
+	}	
+}
 
 //	Funciones relativas a las conversiones...
 
@@ -98,3 +132,8 @@ exports.convertirEnString=function(objeto){
 	
 	return new String(resultado);
 }
+
+exports.formatoJSON=formatoJSON;
+exports.formatoDebug=formatoDebug;
+exports.formatoTXT=formatoTXT;
+exports.formatoCSV=formatoCSV;
