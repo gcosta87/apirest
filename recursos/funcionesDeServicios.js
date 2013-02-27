@@ -23,6 +23,7 @@
 
 
 util=require('util');
+superagent=require('superagent');
 
 //	CONSTANTES/GLOBALES
 //
@@ -44,6 +45,7 @@ function formatoJSON(objeto){
 }
 
 // Formato Unix. Se espera un Objeto simple (sin atributos compuestos)
+// TO-DO:	Soporte para enviar Colleción de Objetos
 function formatoTXT(objeto){
 	var resultado="";
 
@@ -53,7 +55,7 @@ function formatoTXT(objeto){
 	return resultado;
 }
 
-
+// TO-DO:	Soporte para enviar Colleción de Objetos
 function formatoDebug(objeto){
 	var resultado="{<ul style='list-style-type:none;margin:0px;'>";
 
@@ -71,7 +73,10 @@ function formatoDebug(objeto){
 }
 
 
-// TO-DO: faltaría examinar el escape de las comillas dobles (o no)
+// TO-DO:	* Faltaría examinar el escape de las comillas dobles (o no)
+//			* Agregarle soporte para "campos compuestos"
+//			* Soporte para enviar Colleción de Objetos
+
 function formatoCSV(objeto){
 	var cabecera="";
 	var resultado="";
@@ -96,8 +101,6 @@ function formatoCSV(objeto){
 //	FUNCIONES PÚBLICAS
 //
 
-// TO-DO: función "switch" que invoque a la función correspondiente según el parámetro de formato de resp. Default=JSON
-// 
 // name: selectorDeFormato
 // @param res:	parametro para enviar la respuesta directa al usuario
 // @param req: parametro para saber que formato se solicito (req.query.format)
@@ -117,6 +120,37 @@ exports.selectorDeFormato= function (req,res,objeto){
 		// Formato Default
 		res.send(formatoJSON(objeto))
 	}	
+}
+
+
+// TO-DO:	Funciones relativas al envio de datos. Abstraccion de superagent para hacer POST/GET, etc...
+//			asi se logra estandarizar el envio de "errores genericos" (internos, de conexion, de la fuente consultada)
+
+// name: peticionGET
+// description: realiza un simple GET a la url pasada por parametro. cuando la informacion este lista (sin errores) se llama al callback
+// @param	res:
+// @param	req:
+// @param	url: URL a la cual se va a realizar el GET
+// @param	callback: funcion que procesara la respuesta HTML
+exports.peticionGET=function(res,req,url,callback){
+superagent
+	.get(url)
+	.on('error', function(){
+		// console.log('Se ha producido un Error interno al consultar')
+		res.send('500','Se ha producido un Error interno al consultar');
+	})
+	.end(function(respuesta){
+		if(!respuesta.error){
+			process.nextTick(function(){
+				//Se envia el HTML obtenido
+				callback(respuesta.text);
+			});
+		}
+		else{
+			// console.log('Se ha producido un error en el servicio consultado (404 o 500)');
+			res.send('Error: el servicio consultado ha informado un error');
+		}
+	});	
 }
 
 //	Funciones relativas a las conversiones...
