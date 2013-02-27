@@ -21,6 +21,7 @@
 
 //	Modulo que contiene funciones comunes para todos los servicios
 
+util=require('util');
 
 //	Implementacion base de las funciones de formato
 exports.formatoJSON=function (objeto){
@@ -42,14 +43,22 @@ exports.formatoTXT=function (objeto){
 // @param
 // @return
 
-exports.formatoDebug=function (objeto){
-	var resultado="";
+function formatoDebug(objeto){
+	var resultado="{<ul style='list-style-type:none;margin:0px;'>";
 
-	for (atributo in objeto){
-		resultado+='<strong>'+atributo+'</strong>=<tt>'+objeto[atributo]+'</tt> ('+typeof objeto[atributo]+')<br/>'
+	for (atributo in objeto){		
+		console.log(atributo+"="+typeof objeto[atributo]+" Obj:"+typeof objeto)
+		if(typeof objeto[atributo] === "object"){
+			console.log(atributo+" es un Obj @formatoDebug")
+			resultado+='<li><strong>'+atributo+'</strong> = <span style="color:#045FB4;">(object)</span> ' +formatoDebug(objeto[atributo]);
+		}
+		else{
+			resultado+='<li><strong>'+atributo+'</strong> = <span style="color:#045FB4;">('+typeof objeto[atributo]+')</span> <tt>'+objeto[atributo]+'</tt></li>'
+		}
 	}
-	return resultado;
+	return resultado+"</ul>}";
 }
+exports.formatoDebug=formatoDebug;
 
 // TO-DO: faltaría examinar el escape de las comillas dobles (o no)
 exports.formatoCSV=function (objeto){
