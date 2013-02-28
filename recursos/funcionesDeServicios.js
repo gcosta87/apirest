@@ -44,14 +44,27 @@ function formatoJSON(objeto){
 	return JSON.stringify(objeto)
 }
 
-// Formato Unix. Se espera un Objeto simple (sin atributos compuestos)
+
 // TO-DO:	Soporte para enviar Colleción de Objetos
-function formatoTXT(objeto){
+// nombre:		formatoTXT
+// descripcion:	Convierte un Objeto en formato TXT de Unix
+// estado:		Borrador
+// @param	objeto: el O que se va a procesar
+// @param	padre: string que se utiliza para el procesamiento de "subatrubutos" (p.e direccion.calle). Inicialemnte debe ser ''.
+// @return	string: devuelve la conversion.
+function formatoTXT(objeto,padre){
 	var resultado="";
+	if(padre){padre+='.'}
 
 	for (atributo in objeto){
-		resultado+=atributo+':'+objeto[atributo]+'\n'
+		if(typeof objeto[atributo] === "object"){
+			resultado+=formatoTXT(objeto[atributo],padre+atributo)
+		}
+		else{
+			resultado+=padre+atributo+':'+objeto[atributo]+'\n'
+		}
 	}
+	
 	return resultado;
 }
 
@@ -59,10 +72,8 @@ function formatoTXT(objeto){
 function formatoDebug(objeto){
 	var resultado="{<ul style='list-style-type:none;margin:0px;'>";
 
-	for (atributo in objeto){		
-		console.log(atributo+"="+typeof objeto[atributo]+" Obj:"+typeof objeto)
-		if(typeof objeto[atributo] === "object"){
-			console.log(atributo+" es un Obj @formatoDebug")
+	for (atributo in objeto){				
+		if(typeof objeto[atributo] === "object"){			
 			resultado+='<li><strong>'+atributo+'</strong> = <span style="color:#045FB4;">(object)</span> ' +formatoDebug(objeto[atributo]);
 		}
 		else{
@@ -72,31 +83,69 @@ function formatoDebug(objeto){
 	return resultado+"</ul>}";
 }
 
-
-// TO-DO:	* Faltaría examinar el escape de las comillas dobles (o no)
-//			* Agregarle soporte para "campos compuestos"
-//			* Soporte para enviar Colleción de Objetos
-
-function formatoCSV(objeto){
-	var cabecera="";
-	var resultado="";
-
-	for (atributo in objeto){
-		cabecera+='"'+atributo+'",'
-		if(typeof objeto[atributo] === 'string' || objeto[atributo] instanceof String){
-			resultado+='"'+objeto[atributo]+'",'
+// nombre:		formatoCSVLlamadaRecursiva
+// descripcion:	procesa un objeto que forma parte de un tributo de otro objeto. Se separo de formatoCSV para evitar condicionales de mas.
+// estado:		Estable
+// @param	objeto: objeto a procesar (atributo de otro)
+// @param	padre: cadena inicializada con el nombre del campo
+// @param	columnas: estructura inicializada donde se insertan los datos procesados
+function formatoCSVLlamadaRecursiva(objeto,padre,columnas){
+	padre+='.'
+	
+	for(atributo in objeto){
+		if(typeof objeto[atributo] === "object"){
+			formatoCSVLlamadaRecursiva(objeto[atributo],padre+atributo,columnas);
 		}
 		else{
-			resultado+=objeto[atributo]+','			
+			columnas.push({campo: padre+atributo, valor: objeto[atributo]});		
+		}
+	}
+}
+
+// TO-DO:	* Faltaría examinar el escape de las comillas dobles (o no)
+//			* Soporte para enviar Colleción de Objetos
+// nombre:		formatoCSV
+// descripcion:	Convierte un Objeto...
+// estado:		Borrador
+// @param	objeto: dato a convertir
+// @param	padre: utilizado para procesar los "subatributos". Es usado para saber si es la 1ra llamada a la funcion (para devolver datos)
+// @param	columnas: estructura (arreglo) auxiliar, para luego con
+// @return	string: el objeto convertido
+function formatoCSV(objeto,padre,columnas){
+	//Inicializo la estructura (Arreglo)
+	columnas=[]	
+	
+	for(atributo in objeto){
+		if(typeof objeto[atributo] === "object"){
+			formatoCSVLlamadaRecursiva(objeto[atributo],padre+atributo,columnas);
+		}
+		else{
+			columnas.push({campo: padre+atributo, valor: objeto[atributo]});		
+		}
+	}	
+
+	//Proceso la estructura
+	campos="";
+	valores="";
+	for(i=0;i< columnas.length;i++){
+		campos+='"'+columnas[i].campo+'",';
+		//Si es una cadena la rodeo con comillas dobles
+		if(typeof columnas[i].valor === 'string' || columnas[i].valor instanceof String ){
+			valores+='"'+columnas[i].valor+'",';
+		}
+		else{
+			valores+=columnas[i].valor+',';
 		}
 	}
 	
-	//elimino la ultima coma...
-	cabecera=cabecera.replace(/,$/,'');
-	resultado=resultado.replace(/,$/,'');
-	
-	return cabecera+'\n'+resultado;
+	//Elimino la ultima coma
+	campos=campos.replace(/,$/,'');
+	valores=valores.replace(/,$/,'');
+
+	return campos+'\n'+valores
 }
+
+
 
 //	FUNCIONES PÚBLICAS
 //
@@ -110,7 +159,7 @@ exports.selectorDeFormato= function (req,res,objeto){
 	if(req.query.formato){
 		formato=formatosDeRespuesta[req.query.formato.toLowerCase()];
 		if(formato){
-			res.send(formato(objeto))
+			res.send(formato(objeto,''))
 		}
 		else{
 			res.send('404', 'Error: el formato especificado no existe')
