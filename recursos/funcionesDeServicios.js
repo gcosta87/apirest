@@ -31,11 +31,12 @@ superagent=require('superagent');
 //arreglo asociativo, donde estan los parametros esperados y la funcion correspondiente de conversion
 //"Default" es alias/sinonimo de JSON
 formatosDeRespuesta={
-	'json':	formatoJSON,
-	'debug':	formatoDebug,
-	'txt':		formatoTXT,
-	'csv':		formatoCSV,
-	'default':	formatoJSON
+	'json':	{funcion: formatoJSON, tipoMIME: 'application/json'},
+	'xml':		{funcion: formatoXML, tipoMIME: 'application/xml'},
+	'debug':	{funcion: formatoDebug, tipoMIME: 'text/html'},
+	'txt':		{funcion: formatoTXT, tipoMIME: 'text/plain'},
+	'csv':		{funcion: formatoCSV, tipoMIME: 'text/csv'},
+	'default':	{funcion: formatoJSON, tipoMIME: 'application/json'}
 }
 
 
@@ -47,7 +48,7 @@ function formatoJSON(objeto){
 
 // TO-DO:	Soporte para enviar Colleción de Objetos
 // nombre:		formatoTXT
-// descripcion:	Convierte un Objeto en formato TXT de Unix
+// descripción:	Convierte un Objeto en formato TXT de Unix
 // estado:		Borrador
 // @param	objeto: el O que se va a procesar
 // @param	padre: string que se utiliza para el procesamiento de "subatrubutos" (p.e direccion.calle). Inicialemnte debe ser ''.
@@ -68,9 +69,60 @@ function formatoTXT(objeto,padre){
 	return resultado;
 }
 
+// nombre:		formatoXMLLlamadaRecursiva
+// descripción:	procesa un atributo compuesto de un Objeto. Genera un "hijo/children" del XML final, usado en formatoXML
+// estado:		Estable
+// @param	objeto: "atributo compuesto"
+// @param	tabulacion: string inicializado
+// @return	string: la conversion del atributo
+function formatoXMLLlamadaRecursiva(objeto,tabulacion){
+	var resultado="";
+	for (atributo in objeto){				
+		if(typeof objeto[atributo] === "object"){			
+			resultado+='\n\t'+tabulacion+'<'+atributo+' tipo="object">'+formatoXML(objeto[atributo],tabulacion+'\t')+'\n\t'+tabulacion+'</'+atributo+'>';
+		}
+		else{
+			resultado+='\n\t'+tabulacion+'<'+atributo+' tipo="'+typeof objeto[atributo]+'">'+objeto[atributo]+'</'+atributo+'>'
+		}
+	}
+	
+	return resultado;
+}
+
+
+// TO-DO:	* Soporte para enviar Colleción de Objetos
+//			* El root del XML deberia ser el tipo enviado: Divisa, Cotizacion, Cuenta...
+//			* Solucuinar el problema del "atrib"
+// nombre:		formatoXML
+// descripción:	Otra funcion de conversion. 
+// estado:		Borrador
+// @param	objeto: dato a convertir
+// @param	tabulacion: string para tabular el XML
+// @return	string: la conversion del objeto a XML
+function formatoXML(objeto,tabulacion){	
+	resultado='<?xml version="1.0" encoding="UTF-8" ?>\n<respuesta>';
+
+	for (atributo in objeto){	
+		if(typeof objeto[atributo] === "object"){
+			//pequeña "trampa"
+			atrib=atributo;			
+			resultado+='\n\t'+tabulacion+'<'+atributo+' tipo="object">'+formatoXMLLlamadaRecursiva(objeto[atributo],tabulacion+'\t')+'\n\t'+tabulacion+'</'+atrib+'>';
+		}
+		else{
+			resultado+='\n\t'+tabulacion+'<'+atributo+' tipo="'+typeof objeto[atributo]+'">'+objeto[atributo]+'</'+atributo+'>'
+		}
+	}
+	return resultado+'\n</respuesta>';
+}
+
 // TO-DO:	Soporte para enviar Colleción de Objetos
+// nombre:		formatoDebug
+// descripción:	Convierte al objeto en un "HTML amigable" para el usuario
+// estado:		Estable
+// @param		objeto: dato a procesar
+// @return		retorna un simple HTML
 function formatoDebug(objeto){
-	var resultado="{<ul style='list-style-type:none;margin:0px;'>";
+	var resultado='<html><head><meta charset="utf-8"></head><body>{<ul style="list-style-type:none;margin:0px;">';
 
 	for (atributo in objeto){				
 		if(typeof objeto[atributo] === "object"){			
@@ -80,11 +132,11 @@ function formatoDebug(objeto){
 			resultado+='<li><strong>'+atributo+'</strong> = <span style="color:#045FB4;">('+typeof objeto[atributo]+')</span> <tt>'+objeto[atributo]+'</tt></li>'
 		}
 	}
-	return resultado+"</ul>}";
+	return resultado+"</ul>}</body></html>";
 }
 
 // nombre:		formatoCSVLlamadaRecursiva
-// descripcion:	procesa un objeto que forma parte de un tributo de otro objeto. Se separo de formatoCSV para evitar condicionales de mas.
+// descripción:	procesa un objeto que forma parte de un tributo de otro objeto. Se separo de formatoCSV para evitar condicionales de mas.
 // estado:		Estable
 // @param	objeto: objeto a procesar (atributo de otro)
 // @param	padre: cadena inicializada con el nombre del campo
@@ -105,7 +157,7 @@ function formatoCSVLlamadaRecursiva(objeto,padre,columnas){
 // TO-DO:	* Faltaría examinar el escape de las comillas dobles (o no)
 //			* Soporte para enviar Colleción de Objetos
 // nombre:		formatoCSV
-// descripcion:	Convierte un Objeto...
+// descripción:	Convierte un Objeto...
 // estado:		Borrador
 // @param	objeto: dato a convertir
 // @param	padre: utilizado para procesar los "subatributos". Es usado para saber si es la 1ra llamada a la funcion (para devolver datos)
@@ -150,16 +202,16 @@ function formatoCSV(objeto,padre,columnas){
 //	FUNCIONES PÚBLICAS
 //
 
-// name: selectorDeFormato
+// nombre:		selectorDeFormato
 // @param res:	parametro para enviar la respuesta directa al usuario
 // @param req: parametro para saber que formato se solicito (req.query.format)
 // @param objeto: objeto que se desea enviar
-
 exports.selectorDeFormato= function (req,res,objeto){
 	if(req.query.formato){
 		formato=formatosDeRespuesta[req.query.formato.toLowerCase()];
 		if(formato){
-			res.send(formato(objeto,''))
+			res.type(formato.tipoMIME)
+			res.send(formato.funcion(objeto,''))
 		}
 		else{
 			res.send('404', 'Error: el formato especificado no existe')
@@ -175,8 +227,8 @@ exports.selectorDeFormato= function (req,res,objeto){
 // TO-DO:	Funciones relativas al envio de datos. Abstraccion de superagent para hacer POST/GET, etc...
 //			asi se logra estandarizar el envio de "errores genericos" (internos, de conexion, de la fuente consultada)
 
-// name: peticionGET
-// description: realiza un simple GET a la url pasada por parametro. cuando la informacion este lista (sin errores) se llama al callback
+// nombre:		peticionGET
+// descripción:	realiza un simple GET a la url pasada por parametro. cuando la informacion este lista (sin errores) se llama al callback
 // @param	res:
 // @param	req:
 // @param	url: URL a la cual se va a realizar el GET
