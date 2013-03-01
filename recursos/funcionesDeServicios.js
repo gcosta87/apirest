@@ -266,10 +266,7 @@ superagent
 	.end(function(respuesta){
 		if(!respuesta.error){
 			process.nextTick(function(){
-				//Se envia el HTML obtenido			
-				console.log(util.inspect(respuesta.body))	
-				console.log(util.inspect(respuesta.type))	
-				console.log(util.inspect(respuesta.charset))	
+				//Se envia el HTML obtenido
 				callback(respuesta.text);
 			});
 		}
