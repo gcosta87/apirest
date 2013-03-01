@@ -40,6 +40,7 @@ formatosDeRespuesta={
 }
 
 
+
 //	Implementacion base de las funciones de formato
 function formatoJSON(objeto){
 	return JSON.stringify(objeto)
@@ -198,10 +199,6 @@ function formatoCSV(objeto,padre,columnas){
 }
 
 
-
-//	FUNCIONES PÚBLICAS
-//
-
 // nombre:		selectorDeFormato
 // @param res:	parametro para enviar la respuesta directa al usuario
 // @param req: parametro para saber que formato se solicito (req.query.format)
@@ -222,6 +219,31 @@ exports.selectorDeFormato= function (req,res,objeto){
 		res.send(formatoJSON(objeto))
 	}	
 }
+
+
+// nombre:		respuestaDinamica
+// descripción:	Envia un Objeto segun el Header Acept del cliente. Usada para enviar las listas/colecciones de las "raices" de las APIs. Actualmente soporta HTML,TXT y JSON.
+// estado:		Borrador
+// @param	req:
+// @param	res:
+// @param	objeto:
+
+exports.respuestaDinamica=function(req,res,objeto){
+	res.format({
+		'text/plain': function(){
+			res.send(formatoTXT(respuesta,''));
+		},
+		
+		'text/html': function(){
+			res.send(formatoDebug(respuesta));
+		},
+		
+		'application/json': function(){
+			res.send(formatoJSON(respuesta));
+		}
+	});
+}
+
 
 
 // TO-DO:	Funciones relativas al envio de datos. Abstraccion de superagent para hacer POST/GET, etc...
