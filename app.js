@@ -70,7 +70,7 @@ app.all('/api/smn',routes.ERROR_API_NO_IMPLEMENTADA);
 app.all('/api/personal',routes.ERROR_API_NO_IMPLEMENTADA);
 app.all('/api/divisas/:divisa',servicios.divisas);
 app.all('/api/divisas/',servicios.divisasColeccion);
-app.all('/api/acciones/:empresa',servicios.acciones);
+app.all('/api/acciones/:simbolo',servicios.acciones);
 app.all('/api/acciones/',servicios.accionesColeccion);
 app.all('/api/peliculas',routes.ERROR_API_NO_IMPLEMENTADA);
 
