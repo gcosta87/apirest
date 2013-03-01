@@ -35,7 +35,7 @@ module.exports={
 		minimoDelDia:			'g',
 		rangoDelDia:			'm',
 		fecha:					'd1',
-		hora:					't1',	//No funciona bn la hs
+		hora:					't1',
 		valorCierreAnterior:	'p',
 		valorDeApertura:		'o',
 		volumen:				'v',
