@@ -262,10 +262,14 @@ superagent
 		// console.log('Se ha producido un Error interno al consultar')
 		res.send('500','Se ha producido un Error interno al consultar');
 	})
+	.buffer()	//pequeña trampa para que bufferee la respuesta de datos y este disponible en respuesta.txt
 	.end(function(respuesta){
 		if(!respuesta.error){
 			process.nextTick(function(){
-				//Se envia el HTML obtenido
+				//Se envia el HTML obtenido			
+				console.log(util.inspect(respuesta.body))	
+				console.log(util.inspect(respuesta.type))	
+				console.log(util.inspect(respuesta.charset))	
 				callback(respuesta.text);
 			});
 		}
