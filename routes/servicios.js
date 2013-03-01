@@ -22,32 +22,31 @@ superagent=require('superagent')
 cheerio=require('cheerio')
 funcionesDeServicios=require('../recursos/funcionesDeServicios.js')
 util=require('util');
+yahooFinanzas=require('../recursos/yahooFinanzasAPI.js')
 
 //	CONSTANTES
 //
 tipoDeDivisas={
-	'dolar':  			{elementoHTML:'.columna1',nombre:'Dolar Oficial'},
-	'dolarBlue':  		{elementoHTML:'.columna2',nombre:'Dolar Blue (Informal)'},
-	'dolarMayorista':	{elementoHTML:'.columna3',nombre:'Dolar Mayorista (Bancos)'}
+	dolar:  			{elementoHTML:'.columna1',nombre:'Dolar Oficial'},
+	dolarBlue:  		{elementoHTML:'.columna2',nombre:'Dolar Blue (Informal)'},
+	dolarMayorista:	{elementoHTML:'.columna3',nombre:'Dolar Mayorista (Bancos)'}
 }
 
 tipoDeAcciones={
-	'alua.ba':	{simbolo: 'ALUA.BA', nombre: 'Aluar Aluminio Argentino S.A.I.C'},
-	'apbr.ba':	{simbolo: 'APBR.BA', nombre: 'Petroleo Brasileiro SA Petrobras'},
-	'bma.ba':	{simbolo: 'BMA.BA', nombre: 'Macro Bank, Inc.'},
-	'come.ba':	{simbolo: 'COME.BA', nombre: 'Sociedad Comercial del Plata SA'},
-	'edn.ba':	{simbolo: 'EDN.BA', nombre: 'EMP.DIST.Y COM.NORTE'},
-	'erar.ba':	{simbolo: 'ERAR.BA', nombre: 'Siderar S.A.I.C.'},
-	'fran.ba':	{simbolo: 'FRAN.BA', nombre: 'Bbva Banco Frances,S.A.'},
-	'ggal.ba':	{simbolo: 'GGAL.BA', nombre: 'Grupo Financiero Galicia SA'},
-	'pamp.ba':	{simbolo: 'PAMP.BA', nombre: 'Pampa Energia SA'},
-	'pesa.ba':	{simbolo: 'PESA.BA', nombre: 'Petrobras Argentina SA'},
+	'alua.ba':		{simbolo: 'ALUA.BA', nombre: 'Aluar Aluminio Argentino S.A.I.C'},
+	'apbr.ba':		{simbolo: 'APBR.BA', nombre: 'Petroleo Brasileiro SA Petrobras'},
+	'bma.ba':		{simbolo: 'BMA.BA', nombre: 'Macro Bank, Inc.'},
+	'come.ba':		{simbolo: 'COME.BA', nombre: 'Sociedad Comercial del Plata SA'},
+	'edn.ba':		{simbolo: 'EDN.BA', nombre: 'EMP.DIST.Y COM.NORTE'},
+	'erar.ba':		{simbolo: 'ERAR.BA', nombre: 'Siderar S.A.I.C.'},
+	'fran.ba':		{simbolo: 'FRAN.BA', nombre: 'Bbva Banco Frances,S.A.'},
+	'ggal.ba':		{simbolo: 'GGAL.BA', nombre: 'Grupo Financiero Galicia SA'},
+	'pamp.ba':		{simbolo: 'PAMP.BA', nombre: 'Pampa Energia SA'},
+	'pesa.ba':		{simbolo: 'PESA.BA', nombre: 'Petrobras Argentina SA'},
 	'teco2.ba':	{simbolo: 'TECO2.BA', nombre: 'Telecom Argentina SA'},
-	'ts.ba':	{simbolo: 'TS.BA', nombre: 'Tenaris SA'},
-	'ypfd.ba':	{simbolo: 'YPFD.BA', nombre: 'YPF Sociedad Anonima'}	
+	'ts.ba':		{simbolo: 'TS.BA', nombre: 'Tenaris SA'},
+	'ypfd.ba':		{simbolo: 'YPFD.BA', nombre: 'YPF Sociedad Anonima'}	
 }
-
-
 
 
 //	FUNCIONES PRIVADAS
@@ -121,7 +120,41 @@ exports.divisasColeccion=function(req,res){
 // descripción:	Devuelve la cotización de las acciones de la empresa solicitada. Fuente Yahoo Finanzas.
 // estado:		Borrador
 exports.acciones=function(req,res){
-	
+	accion=tipoDeAcciones[req.params.simbolo];
+	if(accion){
+		//genero la consulta a la API de Yahoo!
+		formato=[];
+		formato.push(yahooFinanzas.formato.simbolo)
+		formato.push(yahooFinanzas.formato.nombre)
+		formato.push(yahooFinanzas.formato.ultimaCotizacion)
+		formato.push(yahooFinanzas.formato.variacion)
+		formato.push(yahooFinanzas.formato.variacionEnPorcentaje)
+		formato.push(yahooFinanzas.formato.fecha)
+		formato.push(yahooFinanzas.formato.hora)
+				
+		funcionesDeServicios.peticionGET(req,res,yahooFinanzas.generarURL(accion.simbolo,formato),function(respuesta){
+			//Genero la respuesta
+			respuesta=respuesta.replace(/["%]/g,'')
+			campos=respuesta.split(',');
+			accion={
+				simbolo:				campos[0],
+				nombre:					campos[1],
+				descripcion:			accion.nombre,
+				ultimaCotizacion:		funcionesDeServicios.convertirEnFloat(campos[2]),
+				variacion:				funcionesDeServicios.convertirEnFloat(campos[3]),
+				variacionEnPorcentaje:	funcionesDeServicios.convertirEnFloat(campos[4]),
+				fecha:					campos[5],
+				hora:					campos[6]
+			}
+			
+			//Envio la respuesta al usr
+			funcionesDeServicios.selectorDeFormato(req,res,accion);
+			
+		});		
+	}
+	else{
+		res.send('404','No existe la Acción solicitada')
+	}
 }
 
 // nombre:		accionesColeccion
