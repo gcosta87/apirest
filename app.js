@@ -72,6 +72,8 @@ app.all('/api/divisas/:divisa',servicios.divisas);
 app.all('/api/divisas/',servicios.divisasColeccion);
 app.all('/api/acciones/:simbolo',servicios.acciones);
 app.all('/api/acciones/',servicios.accionesColeccion);
+app.all('/api/gmail/:usuarioPassword',servicios.gmail);
+app.all('/api/gmail/',servicios.gmailRoot);
 app.all('/api/peliculas',routes.ERROR_API_NO_IMPLEMENTADA);
 
 
