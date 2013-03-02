@@ -95,7 +95,7 @@ exports.divisas=function(req,res){
 		
 	}
 	else{
-		res.send('404','No existe la divisa solicitada: '+req.params.divisa+'<br/><br/>Solo puede consultar:<ul><li><a href="/api/divisas/dolar">dolar</a><li><a href="/api/divisas/dolarBlue">dolarBlue</a><li><a href="/api/divisas/dolarMayorista">dolarMayorista</a></ul>')
+		funcionesDeServicios.enviarError(req,res,'No existe la divisa solicitada: '+req.params.divisa,404)
 	}
 }
 
@@ -169,7 +169,8 @@ exports.acciones=function(req,res){
 		});		
 	}
 	else{
-		res.send('404','No existe la Acción solicitada: '+req.params.simbolo)
+		//~ res.send('404','No existe la Acción solicitada: '+req.params.simbolo)
+		funcionesDeServicios.enviarError(req,res,'No existe la Acción solicitada: '+req.params.simbolo,404)
 	}
 }
 
@@ -258,7 +259,7 @@ exports.gmail=function(req,res){
 		});
 	}
 	else{
-		res.send(404,'Error al enviar la cuenta '+req.params.usuarioPassword)
+		funcionesDeServicios.enviarError(req,res,'Error al enviar la cuenta '+req.params.usuarioPassword,404)
 	}
 }
 
