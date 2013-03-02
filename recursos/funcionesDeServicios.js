@@ -203,7 +203,7 @@ function formatoCSV(objeto,padre,columnas){
 // @param res:	parametro para enviar la respuesta directa al usuario
 // @param req: parametro para saber que formato se solicito (req.query.format)
 // @param objeto: objeto que se desea enviar
-exports.selectorDeFormato= function (req,res,objeto){
+function selectorDeFormato(req,res,objeto){
 	if(req.query.formato){
 		formato=formatosDeRespuesta[req.query.formato.toLowerCase()];
 		if(formato){
@@ -260,7 +260,9 @@ superagent
 	.get(url)
 	.on('error', function(){
 		// console.log('Se ha producido un Error interno al consultar')
-		res.send('500','Se ha producido un Error interno al consultar');
+		//~ res.send('500','Se ha producido un Error interno al consultar');
+		enviarError(req,res,'Se ha producido un Error interno (500) al consultar',500);
+		
 	})
 	.buffer()	//pequeña trampa para que bufferee la respuesta de datos y este disponible en respuesta.txt
 	.end(function(respuesta){
@@ -272,10 +274,29 @@ superagent
 		}
 		else{
 			// console.log('Se ha producido un error en el servicio consultado (404 o 500)');
-			res.send('Error: el servicio consultado ha informado un error');
+			//~ res.send('Error: el servicio consultado ha informado un error');
+			enviarError(req,res,'Error: el servicio consultado ha informado un error',200);
 		}
 	});	
 }
+
+// nombre:		enviarError
+// descripción:	Envia un error al usuario usando la funcion de selector de formato
+// estado:		Borraodr
+// @param	req
+// @param	res
+// @param	mensaje: string conteniendo el mensaje del error
+// @param	codigoHTTP: numero del codigo de status HTTP (404,200,500)
+// @return	
+function enviarError(req,res,mensaje,codigoHTTP){
+	objeto={error: 'El servicio consultado ha informado sobre un error'}
+	if(!codigoHTTP){
+		codigoHTTP=200;
+	}
+	res=res.status(codigoHTTP)
+	selectorDeFormato(req,res,objeto);
+}
+
 
 //	Funciones relativas a las conversiones...
 
@@ -290,6 +311,9 @@ exports.convertirEnString=function(objeto){
 	
 	return new String(resultado);
 }
+
+exports.enviarError=enviarError;
+exports.selectorDeFormato=selectorDeFormato;
 
 exports.formatoJSON=formatoJSON;
 exports.formatoDebug=formatoDebug;
