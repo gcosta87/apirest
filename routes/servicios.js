@@ -214,7 +214,7 @@ exports.gmail=function(req,res){
 
 			xml2js.parseString(respuesta,function(err,resultado){
 				cuentaGmail={
-					usuario:	usuario,
+					usuario:	(usuario.indexOf("@")==-1)?usuario+'@gmail.com':usuario,
 					cantidad:	parseInt(resultado.feed.fullcount[0])
 				}
 
@@ -224,19 +224,30 @@ exports.gmail=function(req,res){
 					
 					mailsNoLeidos=resultado.feed.entry;
 					for (i=0;i< mailsNoLeidos.length;i++){
+						fecha=new Date(mailsNoLeidos[i].issued[0]);
+						
 						mail={}
+						
+						
 						mail.asunto=mailsNoLeidos[i].title[0];
 						mail.resumen=mailsNoLeidos[i].summary[0];
-						mail.recibido=mailsNoLeidos[i].issued[0];
+						
+						mail.fecha={}
+						mail.fecha.dia=fecha.getDate()+'/'+fecha.getMonth()+'/'+fecha.getFullYear();
+						mail.fecha.hora=fecha.getHours()+':'+fecha.getMinutes();	//Hora Argentina (Server)
+						
 						mail.autor={}
 						mail.autor.nombre=mailsNoLeidos[i].author[0].name[0];
 						mail.autor.mail=mailsNoLeidos[i].author[0].email[0];
+						
 						mail.link=mailsNoLeidos[i].link[0].$.href;
 						
 						cuentaGmail.mails.push(mail);
+						
 					}
 				}
 				
+				cuentaGmail.fuente={nombre:	'Gmail',	url: 'http://www.gmail.com/'}
 				
 				
 				funcionesDeServicios.selectorDeFormato(req,res,cuentaGmail);
