@@ -20,8 +20,11 @@
 
 superagent=require('superagent')
 cheerio=require('cheerio')
-funcionesDeServicios=require('../recursos/funcionesDeServicios.js')
+xml2js=require('xml2js')
 util=require('util');
+
+
+funcionesDeServicios=require('../recursos/funcionesDeServicios.js')
 yahooFinanzas=require('../recursos/yahooFinanzasAPI.js')
 
 //	CONSTANTES
@@ -198,3 +201,71 @@ exports.accionesColeccion=function(req,res){
 
 	funcionesDeServicios.respuestaDinamica(req,res,respuesta);
 }
+
+// nombre:		gmail
+// descripción:	Informa para una cuenta determinada si posee mails sin leer. Asu vez presenta una previsualizacion de cada uno.
+// estado:		Borrador
+exports.gmail=function(req,res){
+	if(req.params.usuarioPassword){
+		usuario=req.params.usuarioPassword.split(':')[0];
+		password=req.params.usuarioPassword.split(':')[1];
+		
+		funcionesDeServicios.peticionGET(req,res,'https://'+req.params.usuarioPassword+'@mail.google.com/mail/feed/atom',function(respuesta){
+
+			xml2js.parseString(respuesta,function(err,resultado){
+				cuentaGmail={
+					usuario:	usuario,
+					cantidad:	parseInt(resultado.feed.fullcount[0])
+				}
+
+				if(cuentaGmail.cantidad > 0){
+					//proceso los mails
+					cuentaGmail.mails=[];
+					
+					mailsNoLeidos=resultado.feed.entry;
+					for (i=0;i< mailsNoLeidos.length;i++){
+						mail={}
+						mail.asunto=mailsNoLeidos[i].title[0];
+						mail.resumen=mailsNoLeidos[i].summary[0];
+						mail.recibido=mailsNoLeidos[i].issued[0];
+						mail.autor={}
+						mail.autor.nombre=mailsNoLeidos[i].author[0].name[0];
+						mail.autor.mail=mailsNoLeidos[i].author[0].email[0];
+						mail.link=mailsNoLeidos[i].link[0].$.href;
+						
+						cuentaGmail.mails.push(mail);
+					}
+				}
+				
+				
+				
+				funcionesDeServicios.selectorDeFormato(req,res,cuentaGmail);
+				//~ funcionesDeServicios.selectorDeFormato(req,res,resultado);
+			});
+			
+			//~ funcionesDeServicios.selectorDeFormato(req,res,objetoCuenta);
+		});
+	}
+	else{
+		res.send(404,'Error al enviar la cuenta '+req.params.usuarioPassword)
+	}
+}
+
+
+// nombre:		gmailRoot
+// descripción:	Indica como usar la API
+// estado:		Borrador
+exports.gmailRoot=function(req,res){
+	//Objeto respuesta
+	respuesta={
+		descripcion:	'Informa para una cuenta de Gmail determinada si posee mails no leidos. Se informa la cantidad y un breve resumen de los mismos.',
+		documentacion:	'/api/gmail/',
+		uso:{
+				modoDeUso:	'/api/gmail/nombre_de_usuario:contraseña/',
+				ejemplo:	'/api/gmail/juanperez:123456789/'
+		}
+	}
+	
+	funcionesDeServicios.respuestaDinamica(req,res,respuesta);
+}
+
