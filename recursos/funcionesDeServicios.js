@@ -255,7 +255,7 @@ exports.respuestaDinamica=function(req,res,objeto){
 // @param	req:
 // @param	url: URL a la cual se va a realizar el GET
 // @param	callback: funcion que procesara la respuesta HTML
-exports.peticionGET=function(res,req,url,callback){
+exports.peticionGET=function(req,res,url,callback){
 superagent
 	.get(url)
 	.on('error', function(){
