@@ -1,3 +1,7 @@
+// yahooFinanzasAPI.js
+//
+// Copyright 2013 Gonzalo Gabriel Costa <gonzalogcostaARROBAyahooPUNTOcomPUNTOar>
+// 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
@@ -12,6 +16,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 // MA 02110-1301, USA.
+
 
 // Pequeño modulo que contiene informacion relativa a la API de Yahoo Finanzas CSV.
 
