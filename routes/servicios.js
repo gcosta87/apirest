@@ -18,13 +18,13 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 // MA 02110-1301, USA.
 
-superagent=require('superagent')
 cheerio=require('cheerio')
 xml2js=require('xml2js')
 util=require('util');
 
 
 funcionesDeServicios=require('../recursos/funcionesDeServicios.js')
+funcionesHTTP=require('../recursos/funcionesHTTP.js')
 yahooFinanzas=require('../recursos/yahooFinanzasAPI.js')
 
 //	CONSTANTES
@@ -59,14 +59,14 @@ tipoDeAcciones={
 //	FUNCIONES PUBLICAS
 //
 
-// nombre:		divisas
-// descripción:	Devuelve el valor de los diversas divisas: Dolar Ofical,Dolar Blue/Informal, Dolar Mayorista, Euro, Real,etc.... Fuente Ambito Financiero. Falta
-// estado:		Borrador: Solo soporta los distintos Dolares, faltan las restantes divisas.
+// @nombre:			divisas
+// @descripción:	Devuelve el valor de los diversas divisas: Dolar Ofical,Dolar Blue/Informal, Dolar Mayorista, Euro, Real,etc.... Fuente Ambito Financiero. Falta
+// @estado:			Borrador: Solo soporta los distintos Dolares, faltan las restantes divisas.
 exports.divisas=function(req,res){
 	divisa=tipoDeDivisas[req.params.divisa];
 	
 	if(divisa){
-		funcionesDeServicios.peticionGET(req,res,'http://ambito.com/economia/mercados/monedas/dolar/',function(respuesta){			
+		funcionesHTTP.peticionGET(req,res,'http://ambito.com/economia/mercados/monedas/dolar/',function(respuesta){			
 			$=cheerio.load(respuesta)
 			
 			//Obtengo los valores
@@ -99,10 +99,10 @@ exports.divisas=function(req,res){
 	}
 }
 
-// nombre:		divisasColeccion
-// descripción:	Retorna la coleccion de divisas (actualmente) disponibles para consultar
-// estado:		Borrador
-exports.divisasColeccion=function(req,res){
+// @nombre:			divisasRaiz
+// @descripción:	Retorna la coleccion de divisas (actualmente) disponibles para consultar
+// @estado:			Borrador
+exports.divisasRaiz=function(req,res){
 	//Objeto respuesta
 	respuesta={
 		descripcion: "Consulte las principales divisas",
@@ -119,14 +119,17 @@ exports.divisasColeccion=function(req,res){
 }
 
 
-// nombre:		acciones
-// descripción:	Devuelve la cotización de las acciones de la empresa solicitada. Fuente Yahoo Finanzas.
-// estado:		Borrador
+// @nombre:			acciones
+// @descripción:	Devuelve la cotización de las acciones de la empresa solicitada. Fuente Yahoo Finanzas.
+// @estado:			Borrador
 exports.acciones=function(req,res){
 	accion=tipoDeAcciones[req.params.simbolo];
 	if(accion){
-		//genero la consulta a la API de Yahoo!
+		
+		//Genero la consulta a la API de Yahoo!
 		formato=[];
+	
+		//por defecto			
 		formato.push(yahooFinanzas.formato.simbolo)
 		formato.push(yahooFinanzas.formato.nombre)
 		formato.push(yahooFinanzas.formato.ultimaCotizacion)
@@ -136,8 +139,8 @@ exports.acciones=function(req,res){
 		formato.push(yahooFinanzas.formato.valorCierreAnterior)
 		formato.push(yahooFinanzas.formato.fecha)
 		formato.push(yahooFinanzas.formato.hora)
-				
-		funcionesDeServicios.peticionGET(req,res,yahooFinanzas.generarURL(accion.simbolo,formato),function(respuesta){
+		
+		funcionesHTTP.peticionGET(req,res,yahooFinanzas.generarURL(accion.simbolo,formato),function(respuesta){
 			//Genero la respuesta
 			respuesta=respuesta.replace(/["%]/g,'')
 			campos=respuesta.split(',');
@@ -165,19 +168,17 @@ exports.acciones=function(req,res){
 			
 			//Envio la respuesta al usr
 			funcionesDeServicios.selectorDeFormato(req,res,accion);
-			
 		});		
 	}
 	else{
-		//~ res.send('404','No existe la Acción solicitada: '+req.params.simbolo)
 		funcionesDeServicios.enviarError(req,res,'No existe la Acción solicitada: '+req.params.simbolo,404)
 	}
 }
 
-// nombre:		accionesColeccion
-// descripción:	Retorna la coleccion de acciones del merval que (actualmente) están disponibles.
-// estado:		Borrador
-exports.accionesColeccion=function(req,res){
+// @nombre:			accionesRaiz
+// @descripción:	Retorna la coleccion de acciones del merval que (actualmente) están disponibles.
+// @estado:			Borrador
+exports.accionesRaiz=function(req,res){
 	//Objeto respuesta
 	respuesta={
 		descripcion: "Consulte las acciones del Merval",
@@ -203,15 +204,15 @@ exports.accionesColeccion=function(req,res){
 	funcionesDeServicios.respuestaDinamica(req,res,respuesta);
 }
 
-// nombre:		gmail
-// descripción:	Informa para una cuenta determinada si posee mails sin leer. Asu vez presenta una previsualizacion de cada uno.
-// estado:		Borrador
+// @nombre:			gmail
+// @descripción:	Informa para una cuenta determinada si posee mails sin leer. Asu vez presenta una previsualizacion de cada uno.
+// @estado:			Borrador
 exports.gmail=function(req,res){
 	if(req.params.usuarioPassword){
 		usuario=req.params.usuarioPassword.split(':')[0];
 		password=req.params.usuarioPassword.split(':')[1];
 		
-		funcionesDeServicios.peticionGET(req,res,'https://'+req.params.usuarioPassword+'@mail.google.com/mail/feed/atom',function(respuesta){
+		funcionesHTTP.peticionGET(req,res,'https://'+req.params.usuarioPassword+'@mail.google.com/mail/feed/atom',function(respuesta){
 
 			xml2js.parseString(respuesta,function(err,resultado){
 				cuentaGmail={
@@ -244,18 +245,13 @@ exports.gmail=function(req,res){
 						mail.link=mailsNoLeidos[i].link[0].$.href;
 						
 						cuentaGmail.mails.push(mail);
-						
 					}
-				}
-				
+				}				
 				cuentaGmail.fuente={nombre:	'Gmail',	url: 'http://www.gmail.com/'}
-				
-				
+
 				funcionesDeServicios.selectorDeFormato(req,res,cuentaGmail);
-				//~ funcionesDeServicios.selectorDeFormato(req,res,resultado);
 			});
-			
-			//~ funcionesDeServicios.selectorDeFormato(req,res,objetoCuenta);
+
 		});
 	}
 	else{
@@ -264,10 +260,10 @@ exports.gmail=function(req,res){
 }
 
 
-// nombre:		gmailRoot
-// descripción:	Indica como usar la API
-// estado:		Borrador
-exports.gmailRoot=function(req,res){
+// @nombre:			gmailRaiz
+// @descripción:	Indica como usar la API
+// @estado:			Borrador
+exports.gmailRaiz=function(req,res){
 	//Objeto respuesta
 	respuesta={
 		descripcion:	'Informa para una cuenta de Gmail determinada si posee mails no leidos. Se informa la cantidad y un breve resumen de los mismos.',
@@ -281,3 +277,90 @@ exports.gmailRoot=function(req,res){
 	funcionesDeServicios.respuestaDinamica(req,res,respuesta);
 }
 
+
+// TO-DO:	* Mejorar/Limpiar el código
+//			* Crear la API Personal, para abstraer al controlador
+// @nombre:			personal
+// @descripción:	representa el saldo y fecha de vencimiento de un Cliente. Proximamente soportará
+// @estado:			Inestable
+exports.personal=function(req,res){
+	if(req.params.usuarioPassword){
+		parametros=req.params.usuarioPassword.split(':');
+		codigoDeArea=parametros[0];
+		celular=parametros[1];
+		password=parametros[2];
+
+		urlDeLogin="https://autogestion.personal.com.ar/individuos/"
+		
+		funcionesHTTP.preLogin(req,res,urlDeLogin,function(formulario,cookies){
+			$=cheerio.load(formulario);
+			//Obtengo los inputs hidden
+			inputsHidden=$('input[type=hidden]', '#aspnetForm')
+			
+			//Envio los campos en txt a la funcion xq en modo objeto no funcionan bien con superagent!
+			camposTXT='__EVENTTARGET=ctl00%24BannerLogueo%24LogueoPropio%24BtnAceptar';
+					
+			for(i=0;i<inputsHidden.length;i++){
+				//Este campo debe ser ignorado, porque se "carga" via JavaScript con un valor por defecto
+				if(inputsHidden[i].attribs.name != '__EVENTTARGET'){
+					camposTXT+='&'+encodeURIComponent(inputsHidden[i].attribs.name)+'='+encodeURIComponent(inputsHidden[i].attribs.value)
+				}
+			}
+			
+			//Campo hidden no dectectado por cheerio...
+			eventValidation=$('input[name=__EVENTVALIDATION]')
+			camposTXT+='&__EVENTVALIDATION='+encodeURIComponent(eventValidation[0].attribs.value);
+			//Agrego los restantes campos
+			camposTXT+='&ctl00%24BannerLogueo%24LogueoPropio%24TxtArea='+encodeURIComponent(codigoDeArea)+'&ctl00%24BannerLogueo%24LogueoPropio%24TxtLinea='+encodeURIComponent(celular)+'&ctl00%24BannerLogueo%24LogueoPropio%24TxtPin='+encodeURIComponent(password)+'&IDToken3='
+			
+			//Los datos se deben enviar de acuerdo al x-www-form-urlencoded...tanto el value como el key debe ser encodedados, pero no asi el & ni =, que los delimitan.
+			funcionesHTTP.postLogin(req,res,urlDeLogin,camposTXT,cookies,function(html,cookies){
+				
+				funcionesHTTP.peticionGETconCookies(req,res,'https://autogestion.personal.com.ar/Individuos/inicio_tarjeta.aspx',cookies,function(respuesta){
+					if(respuesta){
+						//Objeto respuesta
+						cuentaDePersonal={
+							cliente:{
+								codigoDeArea: parseInt(codigoDeArea),
+								celular: parseInt(celular)
+							} 
+						}
+				
+						$=cheerio.load(respuesta);
+						
+						cuentaDePersonal.saldo=funcionesDeServicios.convertirEnFloat($('#ctl00_ContenedorAutogestion_lblSaldo').text())
+						cuentaDePersonal.fechaDeVencimiento=$('#ctl00_ContenedorAutogestion_lblVencimiento').text()
+						cuentaDePersonal.fuente={nombre:'Autogestión de Personal Argentina', url:'http://autogestion.personal.com.ar/'}
+						
+						
+						funcionesDeServicios.selectorDeFormato(req,res,cuentaDePersonal);
+					}
+					else{
+						funcionesDeServicios.enviarError(req,res,'No se ha podido procesar la solicitud del cliente '+codigoDeArea+celular,500)
+					}
+				});
+				
+			});
+		});
+	}
+	else{
+		funcionesDeServicios.enviarError(req,res,'Error al enviar la cuenta '+req.params.usuarioPassword,404)
+	}
+}
+
+// @nombre:			personalRaiz
+// @descripción:	Muestra como usar la API
+// @estado:			Borrador
+exports.personalRaiz=function(req,res){
+	//Objeto respuesta
+	respuesta={
+		descripcion:	'Informa para una cuenta de Autogestión de Personal Argentina, el saldo y fecha de vencimiento. Proximamente se publicará las últimas recargas hechas.',
+		documentacion:	'/api/personal/',
+		uso:{
+				modoDeUso:	'/api/personal/Codigo_De_Area:Celular:Contraseña/',
+				ejemplo:	'/api/personal/221:0123456:123abc/'
+		}
+	}
+	
+	funcionesDeServicios.respuestaDinamica(req,res,respuesta);
+}
