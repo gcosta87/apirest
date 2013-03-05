@@ -1,7 +1,6 @@
 // funcionesDeServicios.js
 //
 // Copyright 2013 Gonzalo Gabriel Costa <gonzalogcostaARROBAyahooPUNTOcomPUNTOar>
-
 // 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,7 +22,6 @@
 
 
 util=require('util');
-superagent=require('superagent');
 
 //	CONSTANTES/GLOBALES
 //
@@ -39,7 +37,73 @@ formatosDeRespuesta={
 	'default':	{funcion: formatoJSON, tipoMIME: 'application/json'}
 }
 
+//	FUNCIONES PRIVADAS
+//
 
+// TO-DO:	Mejorar/Limpiar el Código
+// @nombre:			formatoXMLLlamadaRecursiva
+// @descripción:	procesa un atributo compuesto de un Objeto. Genera un "hijo/children" del XML final, usado en formatoXML
+// @estado:			Estable
+// @parámetro	objeto: "atributo compuesto"
+// @parámetro	tabulacion: string inicializado
+// @retorno	string: la conversion del atributo
+function formatoXMLLlamadaRecursiva(objeto,tabulacion){
+	var resultado="";
+	
+	//Desde esta funcion se los trata a los Arrays
+	if(objeto instanceof Array){
+		for (i=0; i<objeto.length;i++){
+			resultado+='\n\t'+tabulacion+'<item tipo="object">'+formatoXMLLlamadaRecursiva(objeto[i],tabulacion+'\t')+'\n\t'+tabulacion+'</item>';
+		}
+	}
+	else{
+		for (atr in objeto){			
+			if( objeto[atr] instanceof Array){			
+				nombre=atr.toString();
+				resultado+='\n\t'+tabulacion+'<'+atr+' tipo="array">'+formatoXMLLlamadaRecursiva(objeto[atr],tabulacion+'\t')+'\n\t'+tabulacion+'</'+nombre+'>';
+			}
+			else{
+				if(objeto[atr] instanceof Object){
+					atrib=atr
+					resultado+='\n\t'+tabulacion+'<'+atr+' tipo="object">'+formatoXMLLlamadaRecursiva(objeto[atr],tabulacion+'\t')+'\n\t'+tabulacion+'</'+atrib+'>';
+				}
+				else{
+					//Si hace falta le inserto el <![CDATA[]]>
+					if(objeto[atr].toString().match(/[&|<|>]/ig)){
+						resultado+='\n\t'+tabulacion+'<'+atr+' tipo="'+typeof objeto[atr]+'"><![CDATA['+objeto[atr]+']]></'+atr+'>'
+					}
+					else{
+						resultado+='\n\t'+tabulacion+'<'+atr+' tipo="'+typeof objeto[atr]+'">'+objeto[atr]+'</'+atr+'>'
+					}
+				}
+			}
+		}
+	}	
+	return resultado;
+}
+
+// @nombre:			formatoCSVLlamadaRecursiva
+// @descripción:	procesa un objeto que forma parte de un tributo de otro objeto. Se separo de formatoCSV para evitar condicionales de mas.
+// @estado:			Estable
+// @parámetro	objeto: objeto a procesar (atributo de otro)
+// @parámetro	padre: cadena inicializada con el nombre del campo
+// @parámetro	columnas: estructura inicializada donde se insertan los datos procesados
+function formatoCSVLlamadaRecursiva(objeto,padre,columnas){
+	padre+='.'
+	
+	for(atributo in objeto){
+		if(typeof objeto[atributo] === "object"){
+			formatoCSVLlamadaRecursiva(objeto[atributo],padre+atributo,columnas);
+		}
+		else{
+			columnas.push({campo: padre+atributo, valor: objeto[atributo]});		
+		}
+	}
+}
+
+
+//	FUNCIONES PÚBLICAS DEL MÓDULO
+//
 
 //	Implementacion base de las funciones de formato
 function formatoJSON(objeto){
@@ -48,12 +112,12 @@ function formatoJSON(objeto){
 
 
 // TO-DO:	Soporte para enviar Colleción de Objetos
-// nombre:		formatoTXT
-// descripción:	Convierte un Objeto en formato TXT de Unix
-// estado:		Borrador
-// @param	objeto: el O que se va a procesar
-// @param	padre: string que se utiliza para el procesamiento de "subatrubutos" (p.e direccion.calle). Inicialemnte debe ser ''.
-// @return	string: devuelve la conversion.
+// @nombre:			formatoTXT
+// @descripción:	Convierte un Objeto en formato TXT de Unix
+// @estado:			Borrador
+// @parámetro	objeto: el O que se va a procesar
+// @parámetro	padre: string que se utiliza para el procesamiento de "subatrubutos" (p.e direccion.calle). Inicialemnte debe ser ''.
+// @retorno	string: devuelve la conversion.
 function formatoTXT(objeto,padre){
 	var resultado="";
 	if(padre){padre+='.'}
@@ -70,100 +134,60 @@ function formatoTXT(objeto,padre){
 	return resultado;
 }
 
-// nombre:		formatoXMLLlamadaRecursiva
-// descripción:	procesa un atributo compuesto de un Objeto. Genera un "hijo/children" del XML final, usado en formatoXML
-// estado:		Estable
-// @param	objeto: "atributo compuesto"
-// @param	tabulacion: string inicializado
-// @return	string: la conversion del atributo
-function formatoXMLLlamadaRecursiva(objeto,tabulacion){
-	var resultado="";
-	for (atributo in objeto){				
-		if(typeof objeto[atributo] === "object"){			
-			resultado+='\n\t'+tabulacion+'<'+atributo+' tipo="object">'+formatoXML(objeto[atributo],tabulacion+'\t')+'\n\t'+tabulacion+'</'+atributo+'>';
-		}
-		else{
-			resultado+='\n\t'+tabulacion+'<'+atributo+' tipo="'+typeof objeto[atributo]+'">'+objeto[atributo]+'</'+atributo+'>'
-		}
-	}
-	
-	return resultado;
-}
 
 
 // TO-DO:	* Soporte para enviar Colleción de Objetos
 //			* El root del XML deberia ser el tipo enviado: Divisa, Cotizacion, Cuenta...
-//			* Solucuinar el problema del "atrib"
-// nombre:		formatoXML
-// descripción:	Otra funcion de conversion. 
-// estado:		Borrador
-// @param	objeto: dato a convertir
-// @param	tabulacion: string para tabular el XML
-// @return	string: la conversion del objeto a XML
+//			* Solucuinar el problema del "atrib", y limpiar el código
+// @nombre:			formatoXML
+// @descripción:	Otra funcion de conversion. 
+// @estado:			Borrador
+// @parámetro	objeto: dato a convertir
+// @parámetro	tabulacion: string para tabular el XML
+// @retorno	string: la conversion del objeto a XML
 function formatoXML(objeto,tabulacion){	
 	resultado='<?xml version="1.0" encoding="UTF-8" ?>\n<respuesta>';
 
-	for (atributo in objeto){	
-		if(typeof objeto[atributo] === "object"){
-			//pequeña "trampa"
-			atrib=atributo;			
-			resultado+='\n\t'+tabulacion+'<'+atributo+' tipo="object">'+formatoXMLLlamadaRecursiva(objeto[atributo],tabulacion+'\t')+'\n\t'+tabulacion+'</'+atrib+'>';
-		}
-		else{
-			resultado+='\n\t'+tabulacion+'<'+atributo+' tipo="'+typeof objeto[atributo]+'">'+objeto[atributo]+'</'+atributo+'>'
-		}
-	}
+	resultado+=formatoXMLLlamadaRecursiva(objeto,'')
+
 	return resultado+'\n</respuesta>';
 }
 
 // TO-DO:	Soporte para enviar Colleción de Objetos
-// nombre:		formatoDebug
-// descripción:	Convierte al objeto en un "HTML amigable" para el usuario
-// estado:		Estable
-// @param		objeto: dato a procesar
-// @return		retorna un simple HTML
+// @nombre:			formatoDebug
+// @descripción:	Convierte al objeto en un "HTML amigable" para el usuario
+// @estado:			Estable
+// @parámetro		objeto: dato a procesar
+// @retorno		retorna un simple HTML
 function formatoDebug(objeto){
 	var resultado='<html><head><meta charset="utf-8"></head><body>{<ul style="list-style-type:none;margin:0px;">';
 
 	for (atributo in objeto){				
-		if(typeof objeto[atributo] === "object"){			
-			resultado+='<li><strong>'+atributo+'</strong> = <span style="color:#045FB4;">(object)</span> ' +formatoDebug(objeto[atributo]);
+		if(objeto[atributo] instanceof Array){	
+			resultado+='<li><strong>'+atributo+'</strong> = <span style="color:#045FB4;">(array)</span> ' +formatoDebug(objeto[atributo]);
 		}
 		else{
-			resultado+='<li><strong>'+atributo+'</strong> = <span style="color:#045FB4;">('+typeof objeto[atributo]+')</span> <tt>'+objeto[atributo]+'</tt></li>'
+			if(typeof objeto[atributo] === "object"){			
+				resultado+='<li><strong>'+atributo+'</strong> = <span style="color:#045FB4;">(object)</span> ' +formatoDebug(objeto[atributo]);
+			}
+			else{
+				resultado+='<li><strong>'+atributo+'</strong> = <span style="color:#045FB4;">('+typeof objeto[atributo]+')</span> <tt>'+objeto[atributo]+'</tt></li>'
+			}
 		}
 	}
 	return resultado+"</ul>}</body></html>";
 }
 
-// nombre:		formatoCSVLlamadaRecursiva
-// descripción:	procesa un objeto que forma parte de un tributo de otro objeto. Se separo de formatoCSV para evitar condicionales de mas.
-// estado:		Estable
-// @param	objeto: objeto a procesar (atributo de otro)
-// @param	padre: cadena inicializada con el nombre del campo
-// @param	columnas: estructura inicializada donde se insertan los datos procesados
-function formatoCSVLlamadaRecursiva(objeto,padre,columnas){
-	padre+='.'
-	
-	for(atributo in objeto){
-		if(typeof objeto[atributo] === "object"){
-			formatoCSVLlamadaRecursiva(objeto[atributo],padre+atributo,columnas);
-		}
-		else{
-			columnas.push({campo: padre+atributo, valor: objeto[atributo]});		
-		}
-	}
-}
 
 // TO-DO:	* Faltaría examinar el escape de las comillas dobles (o no)
 //			* Soporte para enviar Colleción de Objetos
-// nombre:		formatoCSV
-// descripción:	Convierte un Objeto...
-// estado:		Borrador
-// @param	objeto: dato a convertir
-// @param	padre: utilizado para procesar los "subatributos". Es usado para saber si es la 1ra llamada a la funcion (para devolver datos)
-// @param	columnas: estructura (arreglo) auxiliar, para luego con
-// @return	string: el objeto convertido
+// @nombre:			formatoCSV
+// @descripción:	Convierte un Objeto...
+// @estado:			Borrador
+// @parámetro	objeto: dato a convertir
+// @parámetro	padre: utilizado para procesar los "subatributos". Es usado para saber si es la 1ra llamada a la funcion (para devolver datos)
+// @parámetro	columnas: estructura (arreglo) auxiliar, para luego con
+// @retorno	string: el objeto convertido
 function formatoCSV(objeto,padre,columnas){
 	//Inicializo la estructura (Arreglo)
 	columnas=[]	
@@ -199,7 +223,7 @@ function formatoCSV(objeto,padre,columnas){
 }
 
 
-// nombre:		selectorDeFormato
+// @nombre:			selectorDeFormato
 // @param res:	parametro para enviar la respuesta directa al usuario
 // @param req: parametro para saber que formato se solicito (req.query.format)
 // @param objeto: objeto que se desea enviar
@@ -221,12 +245,12 @@ function selectorDeFormato(req,res,objeto){
 }
 
 
-// nombre:		respuestaDinamica
-// descripción:	Envia un Objeto segun el Header Acept del cliente. Usada para enviar las listas/colecciones de las "raices" de las APIs. Actualmente soporta HTML,TXT y JSON.
-// estado:		Borrador
-// @param	req:
-// @param	res:
-// @param	objeto:
+// @nombre:			respuestaDinamica
+// @descripción:	Envia un Objeto segun el Header Acept del cliente. Usada para enviar las listas/colecciones de las "raices" de las APIs. Actualmente soporta HTML,TXT y JSON.
+// @estado:			Borrador
+// @parámetro	req:
+// @parámetro	res:
+// @parámetro	objeto:
 
 exports.respuestaDinamica=function(req,res,objeto){
 	res.format({
@@ -244,50 +268,14 @@ exports.respuestaDinamica=function(req,res,objeto){
 	});
 }
 
-
-
-// TO-DO:	Funciones relativas al envio de datos. Abstraccion de superagent para hacer POST/GET, etc...
-//			asi se logra estandarizar el envio de "errores genericos" (internos, de conexion, de la fuente consultada)
-
-// nombre:		peticionGET
-// descripción:	realiza un simple GET a la url pasada por parametro. cuando la informacion este lista (sin errores) se llama al callback
-// @param	res:
-// @param	req:
-// @param	url: URL a la cual se va a realizar el GET
-// @param	callback: funcion que procesara la respuesta HTML
-exports.peticionGET=function(req,res,url,callback){
-superagent
-	.get(url)
-	.on('error', function(){
-		// console.log('Se ha producido un Error interno al consultar')
-		//~ res.send('500','Se ha producido un Error interno al consultar');
-		enviarError(req,res,'Se ha producido un Error interno (500) al consultar',500);
-		
-	})
-	.buffer()	//pequeña trampa para que bufferee la respuesta de datos y este disponible en respuesta.txt
-	.end(function(respuesta){
-		if(!respuesta.error){
-			process.nextTick(function(){
-				//Se envia el HTML obtenido
-				callback(respuesta.text);
-			});
-		}
-		else{
-			// console.log('Se ha producido un error en el servicio consultado (404 o 500)');
-			//~ res.send('Error: el servicio consultado ha informado un error');
-			enviarError(req,res,'Error: el servicio consultado ha informado un error',200);
-		}
-	});	
-}
-
-// nombre:		enviarError
-// descripción:	Envia un error al usuario usando la funcion de selector de formato
-// estado:		Borraodr
-// @param	req
-// @param	res
-// @param	mensaje: string conteniendo el mensaje del error
-// @param	codigoHTTP: numero del codigo de status HTTP (404,200,500)
-// @return	
+// @nombre:			enviarError
+// @descripción:	Envia un error al usuario usando la funcion de selector de formato
+// @estado:			Borrador
+// @parámetro	req
+// @parámetro	res
+// @parámetro	mensaje: string conteniendo el mensaje del error
+// @parámetro	codigoHTTP: numero del codigo de status HTTP (404,200,500)
+// @retorno	
 function enviarError(req,res,mensaje,codigoHTTP){
 	objeto={error: 'El servicio consultado ha informado sobre un error'}
 	if(!codigoHTTP){
