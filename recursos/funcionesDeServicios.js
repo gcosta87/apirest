@@ -143,14 +143,11 @@ function formatoTXT(objeto,padre){
 // @descripción:	Otra funcion de conversion. 
 // @estado:			Borrador
 // @parámetro	objeto: dato a convertir
-// @parámetro	tabulacion: string para tabular el XML
 // @retorno	string: la conversion del objeto a XML
-function formatoXML(objeto,tabulacion){	
-	resultado='<?xml version="1.0" encoding="UTF-8" ?>\n<respuesta>';
-
-	resultado+=formatoXMLLlamadaRecursiva(objeto,'')
-
-	return resultado+'\n</respuesta>';
+function formatoXML(objeto){	
+	return '<?xml version="1.0" encoding="UTF-8" ?>\n<respuesta>'+
+			formatoXMLLlamadaRecursiva(objeto,'')+
+			'\n</respuesta>';
 }
 
 // TO-DO:	Soporte para enviar Colleción de Objetos
@@ -185,19 +182,17 @@ function formatoDebug(objeto){
 // @descripción:	Convierte un Objeto...
 // @estado:			Borrador
 // @parámetro	objeto: dato a convertir
-// @parámetro	padre: utilizado para procesar los "subatributos". Es usado para saber si es la 1ra llamada a la funcion (para devolver datos)
-// @parámetro	columnas: estructura (arreglo) auxiliar, para luego con
 // @retorno	string: el objeto convertido
-function formatoCSV(objeto,padre,columnas){
+function formatoCSV(objeto){
 	//Inicializo la estructura (Arreglo)
 	columnas=[]	
 	
 	for(atributo in objeto){
 		if(typeof objeto[atributo] === "object"){
-			formatoCSVLlamadaRecursiva(objeto[atributo],padre+atributo,columnas);
+			formatoCSVLlamadaRecursiva(objeto[atributo],atributo,columnas);
 		}
 		else{
-			columnas.push({campo: padre+atributo, valor: objeto[atributo]});		
+			columnas.push({campo: atributo, valor: objeto[atributo]});		
 		}
 	}	
 
@@ -275,7 +270,6 @@ exports.respuestaDinamica=function(req,res,objeto){
 // @parámetro	res
 // @parámetro	mensaje: string conteniendo el mensaje del error
 // @parámetro	codigoHTTP: numero del codigo de status HTTP (404,200,500)
-// @retorno	
 function enviarError(req,res,mensaje,codigoHTTP){
 	objeto={error: 'El servicio consultado ha informado sobre un error'}
 	if(!codigoHTTP){

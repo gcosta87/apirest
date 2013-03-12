@@ -38,6 +38,11 @@ ELEMENTO_PRIMERA_DIVISION	= 'table.posiciones-1020'
 ELEMENTO_PRIMERA_B_NACIONAL	= 'table.posiciones-131'
 ELEMENTO_SELECCION			= 'table.posiciones-135'
 
+//Objeto fuente usado en las respuestas
+exports.fuente={
+	nombre:	'Futbol para Todos',
+	url:	'http://www.futbolparatodos.com.ar'
+}
 
 //	FUNCIONES PRIVADAS
 //
