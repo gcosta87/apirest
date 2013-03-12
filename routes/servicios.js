@@ -25,7 +25,9 @@ util=require('util');
 
 funcionesDeServicios=require('../recursos/funcionesDeServicios.js')
 funcionesHTTP=require('../recursos/funcionesHTTP.js')
+
 yahooFinanzas=require('../recursos/yahooFinanzasAPI.js')
+futbolParaTodos=require('../recursos/futbolParaTodosAPI.js')
 
 //	CONSTANTES
 //
@@ -76,13 +78,18 @@ exports.divisas=function(req,res){
 			dolarVenta=$('.cierreAnterior big',divisa.elementoHTML).text()
 			ultimaActualizacion=$('.dolarFecha big',divisa.elementoHTML).text()
 		
+			camposUltimaActualizacion=ultimaActualizacion.split('-');
+			dia=camposUltimaActualizacion[0].trim();
+			hora=camposUltimaActualizacion[1].trim();
+			
+		
 			// Construyo el objeto de respuesta
 			objetoDivisa={
 				nombre:			divisa.nombre,
 				venta:			funcionesDeServicios.convertirEnFloat(dolarVenta),
 				compra:			funcionesDeServicios.convertirEnFloat(dolarCompra),
 				variacion:		funcionesDeServicios.convertirEnFloat(dolarVariacion),
-				actualizacion:	ultimaActualizacion,						
+				ultimaActualizacion:	{dia: dia,hora: hora},						
 				fuente:{
 						nombre:		'Ambito.com',
 						url:		'http://www.ambito.com'								
@@ -359,6 +366,93 @@ exports.personalRaiz=function(req,res){
 		uso:{
 				modoDeUso:	'/api/personal/Codigo_De_Area:Celular:Contraseña/',
 				ejemplo:	'/api/personal/221:0123456:123abc/'
+		}
+	}
+	
+	funcionesDeServicios.respuestaDinamica(req,res,respuesta);
+}
+
+
+// @nombre:			futbolPrimeraDivision
+// @descripción:	lista la tabla de posiciones de la primera division para el torneo actual
+// @estado:			Borrador
+exports.futbolPrimeraDivision=function(req,res){
+	futbolParaTodos.obtenerPosicionesDePrimeraDivision(req,res,function(tablaDePosiciones){
+		if(tablaDePosiciones){
+			respuesta={}
+			
+			respuesta.nombre='Primera División'
+			respuesta.tablaDePosiciones=tablaDePosiciones;
+			respuesta.fuente=futbolParaTodos.fuente;			
+			
+			funcionesDeServicios.selectorDeFormato(req,res,respuesta)
+		}
+		else{
+			funcionesDeServicios.enviarError(req,res, 'No se ha podido obtener la tabla de posiciones.','500')
+		}
+	});
+}
+
+// @nombre:			futbolPrimeraBNacional
+// @descripción:	lista la tabla de posiciones de el Nacional B para el torneo actual
+// @estado:			Borrador
+exports.futbolPrimeraBNacional=function(req,res){
+	futbolParaTodos.obtenerPosicionesDePrimeraBNacional(req,res,function(tablaDePosiciones){
+		if(tablaDePosiciones){
+			respuesta={}
+
+			respuesta.nombre='Primera B Nacional'
+			respuesta.tablaDePosiciones=tablaDePosiciones;
+			respuesta.fuente=futbolParaTodos.fuente;			
+			
+			funcionesDeServicios.selectorDeFormato(req,res,respuesta)
+		}
+		else{
+			funcionesDeServicios.enviarError(req,res, 'No se ha podido obtener la tabla de posiciones.','500')
+		}
+	});
+}
+
+// @nombre:			futbolSeleccion
+// @descripción:	lista la tabla de posiciones donde figura la Seleccion Nacional para la Copa/Torneo actual
+// @estado:			Borrador
+exports.futbolSeleccionNacional=function(req,res){
+	futbolParaTodos.obtenerPosicionesDeLaSeleccion(req,res,function(tablaDePosiciones){
+		if(tablaDePosiciones){
+			respuesta={}
+			respuesta.nombre='Selección Nacional'
+			respuesta.tablaDePosiciones=tablaDePosiciones;
+			respuesta.fuente=futbolParaTodos.fuente;			
+			
+			funcionesDeServicios.selectorDeFormato(req,res,respuesta)
+		}
+		else{
+			funcionesDeServicios.enviarError(req,res, 'No se ha podido obtener la tabla de posiciones.','500')
+		}
+	});	
+}
+
+// @nombre:			futbolRaiz
+// @descripción:	Muestra como usar la API
+// @estado:			Borrador
+exports.futbolRaiz=function(req,res){
+	//Objeto respuesta
+	respuesta={
+		descripcion:	'API que contiene información relativa al futbol argentino: Primera Division, Nacional B y la Seccion',
+		documentacion:	'/api/futbol/',
+		uso:{
+				primeraDivision: {
+						descripcion: 	'Consulte la tabla de posiciones de la Primera Division',
+						url:			'/api/futbol/primeraDivision'
+				},
+				primeraBNacional: {
+						descripcion: 	'Consulte la tabla de posiciones de la Primera B Nacional',
+						url:			'/api/futbol/primeraBNacional'
+				},
+				seleccionArgentina: {
+						descripcion: 	'Consulte la tabla de posiciones del torneo/copa donde participa la Seleccion Argentina',
+						url:			'/api/futbol/seleccionNacional'
+				}
 		}
 	}
 	
