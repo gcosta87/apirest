@@ -67,14 +67,28 @@ app.get('/apis',routes.apis);
 //Servicios implementados
 // /api/*
 app.all('/api/smn',routes.ERROR_API_NO_IMPLEMENTADA);
+
 app.all('/api/personal/:usuarioPassword',servicios.personal);
 app.all('/api/personal',servicios.personalRaiz);
+
 app.all('/api/divisas/:divisa',servicios.divisas);
 app.all('/api/divisas/',servicios.divisasRaiz);
+
 app.all('/api/acciones/:simbolo',servicios.acciones);
 app.all('/api/acciones/',servicios.accionesRaiz);
+
 app.all('/api/gmail/:usuarioPassword',servicios.gmail);
 app.all('/api/gmail/',servicios.gmailRaiz);
+
+app.all('/api/futbol/',servicios.futbolRaiz)
+app.all('/api/futbol/primeraDivision',servicios.futbolPrimeraDivision)
+app.all('/api/futbol/primeraDivision/goleadores',routes.ERROR_API_NO_IMPLEMENTADA)
+app.all('/api/futbol/primeraBNacional',servicios.futbolPrimeraBNacional)
+app.all('/api/futbol/primeraBNacional/goleadores',routes.ERROR_API_NO_IMPLEMENTADA)
+app.all('/api/futbol/seleccionNacional',servicios.futbolSeleccionNacional)
+app.all('/api/futbol/equipo/:equipo',routes.ERROR_API_NO_IMPLEMENTADA)
+
+
 app.all('/api/peliculas',routes.ERROR_API_NO_IMPLEMENTADA);
 
 
