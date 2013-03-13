@@ -265,13 +265,13 @@ exports.respuestaDinamica=function(req,res,objeto){
 
 // @nombre:			enviarError
 // @descripción:	Envia un error al usuario usando la funcion de selector de formato
-// @estado:			Borrador
+// @estado:			Estable
 // @parámetro	req
 // @parámetro	res
 // @parámetro	mensaje: string conteniendo el mensaje del error
 // @parámetro	codigoHTTP: numero del codigo de status HTTP (404,200,500)
 function enviarError(req,res,mensaje,codigoHTTP){
-	objeto={error: 'El servicio consultado ha informado sobre un error'}
+	objeto={error: (mensaje)?mensaje:'El servicio consultado ha informado sobre un error'}
 	if(!codigoHTTP){
 		codigoHTTP=200;
 	}
@@ -282,17 +282,15 @@ function enviarError(req,res,mensaje,codigoHTTP){
 
 //	Funciones relativas a las conversiones...
 
+// @nombre:			convertirEnFloat
+// @descripción:	Pequeña funcion que encapsula parseFloat asi trata las comillas que impiden que sea reconocido como float.
+// @estado:			Estable
+// @parámetro	objeto: string, dato a convertir
+// @retorno	number
 exports.convertirEnFloat=function(objeto){
 	return parseFloat(objeto.replace(',','.'));
 }
 
-//devuelve una instancia de String, agregando el escape a las comillas dobles y smples para JS
-exports.convertirEnString=function(objeto){
-	resultado=objeto.replace('"','\"');
-	resultado=objeto.replace("'","\'");
-	
-	return new String(resultado);
-}
 
 exports.enviarError=enviarError;
 exports.selectorDeFormato=selectorDeFormato;

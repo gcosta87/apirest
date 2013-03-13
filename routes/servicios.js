@@ -325,7 +325,7 @@ exports.futbolPrimeraDivision=function(req,res){
 			funcionesDeServicios.selectorDeFormato(req,res,respuesta)
 		}
 		else{
-			funcionesDeServicios.enviarError(req,res, 'No se ha podido obtener la tabla de posiciones.','500')
+			funcionesDeServicios.enviarError(req,res, 'No se ha podido obtener la tabla de posiciones.',500)
 		}
 	});
 }
@@ -345,7 +345,7 @@ exports.futbolPrimeraBNacional=function(req,res){
 			funcionesDeServicios.selectorDeFormato(req,res,respuesta)
 		}
 		else{
-			funcionesDeServicios.enviarError(req,res, 'No se ha podido obtener la tabla de posiciones.','500')
+			funcionesDeServicios.enviarError(req,res, 'No se ha podido obtener la tabla de posiciones.',500)
 		}
 	});
 }
@@ -364,10 +364,68 @@ exports.futbolSeleccionNacional=function(req,res){
 			funcionesDeServicios.selectorDeFormato(req,res,respuesta)
 		}
 		else{
-			funcionesDeServicios.enviarError(req,res, 'No se ha podido obtener la tabla de posiciones.','500')
+			funcionesDeServicios.enviarError(req,res, 'No se ha podido obtener la tabla de posiciones.',500)
 		}
 	});	
 }
+
+
+// @nombre:			futbolEquipo
+// @descripción:	Muestra los datos del equipo solicitado
+// @estado:			Borrador
+exports.futbolEquipo=function(req,res){
+	//busco al equipo solicitado en la estructura
+	equipo=futbolParaTodos.equipos[req.params.equipo];
+	
+	if(equipo){
+		futbolParaTodos.obtenerDatosDeEquipo(req,res,equipo,function(equipo){
+			respuesta.fuente=futbolParaTodos.fuente;
+			
+			funcionesDeServicios.selectorDeFormato(req,res,respuesta);
+		});
+	}
+	else{
+		funcionesDeServicios.enviarError(req,res,'El equipo solicitado no existe: '+req.params.equipo,404)
+	}
+}
+
+
+
+// @nombre:			futbolEquipoRaiz
+// @descripción:	Muestra como obtener detalles de un Equipo/Club
+// @estado:			Borrador
+exports.futbolEquipoRaiz=function(req,res){
+	//Objeto respuesta
+	respuesta={
+		descripcion:	'Se muestra infomación relativa al Club consultado.',
+		documentacion:	'/api/futbol/equipo/',
+		uso:{
+			'lanus': {url: '/api/futbol/equipo/lanus', nombre: 'Club Atlético Lanús'}, 
+			'river': {url: '/api/futbol/equipo/river', nombre: 'Club Atlético River Plate'}, 
+			'godoy-cruz': {url: '/api/futbol/equipo/godoy-cruz', nombre: 'Club Deportivo Godoy Cruz Antonio Tomba'}, 
+			'quilmes': {url: '/api/futbol/equipo/quilmes', nombre: 'Quilmes Atlético Club'}, 
+			'tigre': {url: '/api/futbol/equipo/tigre', nombre: 'Club Atlético Tigre'}, 
+			'newells-old-boys': {url: '/api/futbol/equipo/newells-old-boys', nombre: 'Newell´s Old Boys'}, 
+			'arsenal': {url: '/api/futbol/equipo/arsenal', nombre: 'Arsenal Fútbol Club'}, 
+			'racing': {url: '/api/futbol/equipo/racing', nombre: 'Racing Club'}, 
+			'belgrano': {url: '/api/futbol/equipo/belgrano', nombre: 'Club Atlético Belgrano de Cordoba'}, 
+			'rafaela': {url: '/api/futbol/equipo/rafaela', nombre: 'Atlético de Rafaela'}, 
+			'velez': {url: '/api/futbol/equipo/velez', nombre: 'Club Atlético Vélez Sársfield'}, 
+			'san-lorenzo': {url: '/api/futbol/equipo/san-lorenzo', nombre: 'Club Atlético San Lorenzo de Almagro'}, 
+			'independiente': {url: '/api/futbol/equipo/independiente', nombre: 'Club Atlético Independiente'}, 
+			'all-boys': {url: '/api/futbol/equipo/all-boys', nombre: 'Club Atlético All Boys'}, 
+			'union': {url: '/api/futbol/equipo/union', nombre: 'Club Atlético Unión de Santa Fe'}, 
+			'boca': {url: '/api/futbol/equipo/boca', nombre: 'Club Atlético Boca Juniors'}, 
+			'san-martin-sj': {url: '/api/futbol/equipo/san-martin-sj', nombre: 'Club Atlético San Martín de San Juan'}, 
+			'estudiantes-lp': {url: '/api/futbol/equipo/estudiantes-lp', nombre: 'Club Estudiantes de La Plata'}, 
+			'colon': {url: '/api/futbol/equipo/colon', nombre: 'Club Atlético Colón'}, 
+			'argentinos': {url: '/api/futbol/equipo/argentinos', nombre: 'Asociación Atlética Argentinos Juniors'}
+		}
+	}
+	
+	funcionesDeServicios.respuestaDinamica(req,res,respuesta);
+}
+
 
 // @nombre:			futbolRaiz
 // @descripción:	Muestra como usar la API

@@ -86,7 +86,8 @@ app.all('/api/futbol/primeraDivision/goleadores',routes.ERROR_API_NO_IMPLEMENTAD
 app.all('/api/futbol/primeraBNacional',servicios.futbolPrimeraBNacional)
 app.all('/api/futbol/primeraBNacional/goleadores',routes.ERROR_API_NO_IMPLEMENTADA)
 app.all('/api/futbol/seleccionNacional',servicios.futbolSeleccionNacional)
-app.all('/api/futbol/equipo/:equipo',routes.ERROR_API_NO_IMPLEMENTADA)
+app.all('/api/futbol/equipo/:equipo',servicios.futbolEquipo)
+app.all('/api/futbol/equipo/',servicios.futbolEquipoRaiz)
 
 
 app.all('/api/peliculas',routes.ERROR_API_NO_IMPLEMENTADA);
