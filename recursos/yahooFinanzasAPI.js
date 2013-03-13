@@ -18,7 +18,13 @@
 // MA 02110-1301, USA.
 
 
-// Pequeño modulo que contiene informacion relativa a la API de Yahoo Finanzas CSV.
+/*
+ * Pequeño módulo que contiene informacion relativa a la API de Yahoo Finanzas CSV.
+ */ 
+
+
+//	FUNCIONES PUBLICAS
+//
 
 //	Representacion inicial de la API:
 //	Fuente de los parametros: http://greenido.wordpress.com/2009/12/22/yahoo-finance-hidden-api/
@@ -59,5 +65,30 @@ module.exports={
 		urlGenerada+='&'+this.parametro.formato+'='+arregloFormato.join('');
 		
 		return urlGenerada
+	},
+	
+	//Constantes
+	//
+	//objeto para enviar en las respues al cliente
+	fuente:{
+		nombre:		'Yahoo! Finanzas Argentina',
+		url:		'http://ar.finanzas.yahoo.com/'	
+	},
+	
+	//Acciones soportadas: Todas del Merval
+	tipoDeAcciones:{
+		'alua.ba':		{simbolo: 'ALUA.BA', nombre: 'Aluar Aluminio Argentino S.A.I.C'},
+		'apbr.ba':		{simbolo: 'APBR.BA', nombre: 'Petroleo Brasileiro SA Petrobras'},
+		'bma.ba':		{simbolo: 'BMA.BA', nombre: 'Macro Bank, Inc.'},
+		'come.ba':		{simbolo: 'COME.BA', nombre: 'Sociedad Comercial del Plata SA'},
+		'edn.ba':		{simbolo: 'EDN.BA', nombre: 'EMP.DIST.Y COM.NORTE'},
+		'erar.ba':		{simbolo: 'ERAR.BA', nombre: 'Siderar S.A.I.C.'},
+		'fran.ba':		{simbolo: 'FRAN.BA', nombre: 'Bbva Banco Frances,S.A.'},
+		'ggal.ba':		{simbolo: 'GGAL.BA', nombre: 'Grupo Financiero Galicia SA'},
+		'pamp.ba':		{simbolo: 'PAMP.BA', nombre: 'Pampa Energia SA'},
+		'pesa.ba':		{simbolo: 'PESA.BA', nombre: 'Petrobras Argentina SA'},
+		'teco2.ba':	{simbolo: 'TECO2.BA', nombre: 'Telecom Argentina SA'},
+		'ts.ba':		{simbolo: 'TS.BA', nombre: 'Tenaris SA'},
+		'ypfd.ba':		{simbolo: 'YPFD.BA', nombre: 'YPF Sociedad Anonima'}	
 	}
 }
