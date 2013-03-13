@@ -28,6 +28,7 @@ funcionesHTTP=require('../recursos/funcionesHTTP.js')
 
 yahooFinanzas=require('../recursos/yahooFinanzasAPI.js')
 futbolParaTodos=require('../recursos/futbolParaTodosAPI.js')
+personalArgentina=require('../recursos/personalArgentinaAPI.js')
 
 //	CONSTANTES
 //
@@ -37,21 +38,6 @@ tipoDeDivisas={
 	dolarMayorista:	{elementoHTML:'.columna3',nombre:'Dolar Mayorista (Bancos)'}
 }
 
-tipoDeAcciones={
-	'alua.ba':		{simbolo: 'ALUA.BA', nombre: 'Aluar Aluminio Argentino S.A.I.C'},
-	'apbr.ba':		{simbolo: 'APBR.BA', nombre: 'Petroleo Brasileiro SA Petrobras'},
-	'bma.ba':		{simbolo: 'BMA.BA', nombre: 'Macro Bank, Inc.'},
-	'come.ba':		{simbolo: 'COME.BA', nombre: 'Sociedad Comercial del Plata SA'},
-	'edn.ba':		{simbolo: 'EDN.BA', nombre: 'EMP.DIST.Y COM.NORTE'},
-	'erar.ba':		{simbolo: 'ERAR.BA', nombre: 'Siderar S.A.I.C.'},
-	'fran.ba':		{simbolo: 'FRAN.BA', nombre: 'Bbva Banco Frances,S.A.'},
-	'ggal.ba':		{simbolo: 'GGAL.BA', nombre: 'Grupo Financiero Galicia SA'},
-	'pamp.ba':		{simbolo: 'PAMP.BA', nombre: 'Pampa Energia SA'},
-	'pesa.ba':		{simbolo: 'PESA.BA', nombre: 'Petrobras Argentina SA'},
-	'teco2.ba':	{simbolo: 'TECO2.BA', nombre: 'Telecom Argentina SA'},
-	'ts.ba':		{simbolo: 'TS.BA', nombre: 'Tenaris SA'},
-	'ypfd.ba':		{simbolo: 'YPFD.BA', nombre: 'YPF Sociedad Anonima'}	
-}
 
 
 //	FUNCIONES PRIVADAS
@@ -130,9 +116,10 @@ exports.divisasRaiz=function(req,res){
 // @descripción:	Devuelve la cotización de las acciones de la empresa solicitada. Fuente Yahoo Finanzas.
 // @estado:			Borrador
 exports.acciones=function(req,res){
-	accion=tipoDeAcciones[req.params.simbolo];
+	//Busco la accion solicitada
+	accion=yahooFinanzas.tipoDeAcciones[req.params.simbolo];
+	
 	if(accion){
-		
 		//Genero la consulta a la API de Yahoo!
 		formato=[];
 	
@@ -167,12 +154,9 @@ exports.acciones=function(req,res){
 				valorCierreAnterior:	funcionesDeServicios.convertirEnFloat(campos[6]),
 				fecha:					camposFecha[2]+'/'+camposFecha[1]+'/'+camposFecha[3],	//Original: campos[5],
 				hora:					campos[8].trim(),
-				fuente:{
-					nombre:		'Yahoo! Finanzas Argentina',
-					url:		'http://ar.finanzas.yahoo.com/'
-				}
+				fuente:					yahooFinanzas.fuente
 			}
-			
+						
 			//Envio la respuesta al usr
 			funcionesDeServicios.selectorDeFormato(req,res,accion);
 		});		
@@ -293,61 +277,14 @@ exports.gmailRaiz=function(req,res){
 exports.personal=function(req,res){
 	if(req.params.usuarioPassword){
 		parametros=req.params.usuarioPassword.split(':');
-		codigoDeArea=parametros[0];
-		celular=parametros[1];
-		password=parametros[2];
-
-		urlDeLogin="https://autogestion.personal.com.ar/individuos/"
 		
-		funcionesHTTP.preLogin(req,res,urlDeLogin,function(formulario,cookies){
-			$=cheerio.load(formulario);
-			//Obtengo los inputs hidden
-			inputsHidden=$('input[type=hidden]', '#aspnetForm')
+		cliente=personalArgentina.crearCliente(parametros[0],parametros[1],parametros[2])
+		
+		personalArgentina.obtenerSaldo(req,res,cliente,function(cuentaDePersonal){
+			//adjunto la fuente
+			cuentaDePersonal.fuente=personalArgentina.fuente;
 			
-			//Envio los campos en txt a la funcion xq en modo objeto no funcionan bien con superagent!
-			camposTXT='__EVENTTARGET=ctl00%24BannerLogueo%24LogueoPropio%24BtnAceptar';
-					
-			for(i=0;i<inputsHidden.length;i++){
-				//Este campo debe ser ignorado, porque se "carga" via JavaScript con un valor por defecto
-				if(inputsHidden[i].attribs.name != '__EVENTTARGET'){
-					camposTXT+='&'+encodeURIComponent(inputsHidden[i].attribs.name)+'='+encodeURIComponent(inputsHidden[i].attribs.value)
-				}
-			}
-			
-			//Campo hidden no dectectado por cheerio...
-			eventValidation=$('input[name=__EVENTVALIDATION]')
-			camposTXT+='&__EVENTVALIDATION='+encodeURIComponent(eventValidation[0].attribs.value);
-			//Agrego los restantes campos
-			camposTXT+='&ctl00%24BannerLogueo%24LogueoPropio%24TxtArea='+encodeURIComponent(codigoDeArea)+'&ctl00%24BannerLogueo%24LogueoPropio%24TxtLinea='+encodeURIComponent(celular)+'&ctl00%24BannerLogueo%24LogueoPropio%24TxtPin='+encodeURIComponent(password)+'&IDToken3='
-			
-			//Los datos se deben enviar de acuerdo al x-www-form-urlencoded...tanto el value como el key debe ser encodedados, pero no asi el & ni =, que los delimitan.
-			funcionesHTTP.postLogin(req,res,urlDeLogin,camposTXT,cookies,function(html,cookies){
-				
-				funcionesHTTP.peticionGETconCookies(req,res,'https://autogestion.personal.com.ar/Individuos/inicio_tarjeta.aspx',cookies,function(respuesta){
-					if(respuesta){
-						//Objeto respuesta
-						cuentaDePersonal={
-							cliente:{
-								codigoDeArea: parseInt(codigoDeArea),
-								celular: parseInt(celular)
-							} 
-						}
-				
-						$=cheerio.load(respuesta);
-						
-						cuentaDePersonal.saldo=funcionesDeServicios.convertirEnFloat($('#ctl00_ContenedorAutogestion_lblSaldo').text())
-						cuentaDePersonal.fechaDeVencimiento=$('#ctl00_ContenedorAutogestion_lblVencimiento').text()
-						cuentaDePersonal.fuente={nombre:'Autogestión de Personal Argentina', url:'http://autogestion.personal.com.ar/'}
-						
-						
-						funcionesDeServicios.selectorDeFormato(req,res,cuentaDePersonal);
-					}
-					else{
-						funcionesDeServicios.enviarError(req,res,'No se ha podido procesar la solicitud del cliente '+codigoDeArea+celular,500)
-					}
-				});
-				
-			});
+			funcionesDeServicios.selectorDeFormato(req,res,cuentaDePersonal);
 		});
 	}
 	else{
