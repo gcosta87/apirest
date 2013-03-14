@@ -121,42 +121,28 @@ exports.acciones=function(req,res){
 	
 	if(accion){
 		//Genero la consulta a la API de Yahoo!
-		formato=[];
-	
-		//por defecto			
-		formato.push(yahooFinanzas.formato.simbolo)
-		formato.push(yahooFinanzas.formato.nombre)
-		formato.push(yahooFinanzas.formato.ultimaCotizacion)
-		formato.push(yahooFinanzas.formato.variacion)
-		formato.push(yahooFinanzas.formato.variacionEnPorcentaje)
-		formato.push(yahooFinanzas.formato.valorDeApertura)
-		formato.push(yahooFinanzas.formato.valorCierreAnterior)
-		formato.push(yahooFinanzas.formato.fecha)
-		formato.push(yahooFinanzas.formato.hora)
 		
-		funcionesHTTP.peticionGET(req,res,yahooFinanzas.generarURL(accion.simbolo,formato),function(respuesta){
-			//Genero la respuesta
-			respuesta=respuesta.replace(/["%]/g,'')
-			campos=respuesta.split(',');
+		formato=[];
+		//Si el usuario especifico campos, los proceso..
+		if(req.query.campos){
+			campos=req.query.campos.split(',');
 			
-			//cambio el formato de la fecha: mm/dd/aaaa -> dd/mm/aaaa
-			regexFecha=/([0-9]{1,2})[/]([0-9]{1,2})[/]([0-9]{2,4})/
-			camposFecha= regexFecha.exec(campos[7]);
-
-			accion={
-				simbolo:				campos[0].replace('.BA',''),
-				nombre:					campos[1],
-				descripcion:			accion.nombre,
-				ultimaCotizacion:		funcionesDeServicios.convertirEnFloat(campos[2]),
-				variacion:				funcionesDeServicios.convertirEnFloat(campos[3]),
-				variacionEnPorcentaje:	funcionesDeServicios.convertirEnFloat(campos[4]),
-				valorDeApertura:		funcionesDeServicios.convertirEnFloat(campos[5]),
-				valorCierreAnterior:	funcionesDeServicios.convertirEnFloat(campos[6]),
-				fecha:					camposFecha[2]+'/'+camposFecha[1]+'/'+camposFecha[3],	//Original: campos[5],
-				hora:					campos[8].trim(),
-				fuente:					yahooFinanzas.fuente
+			for(i=0;i<campos.length;i++){
+				//Si existe el campo, lo agrego
+				campo=yahooFinanzas.formato[campos[i]];
+				if(campo){
+					formato.push(campo);
+				}
 			}
-						
+		}
+		else{
+			//Sino brindo los de por defecto
+			formato=yahooFinanzas.consultaDefault;
+		}
+
+		yahooFinanzas.obtenerCotizacion(req,res,accion,formato,function(accion){
+			accion.fuente=yahooFinanzas.fuente;
+			
 			//Envio la respuesta al usr
 			funcionesDeServicios.selectorDeFormato(req,res,accion);
 		});		
@@ -188,6 +174,10 @@ exports.accionesRaiz=function(req,res){
 			'teco2.ba':{simbolo: 'TECO2', nombre: 'Telecom Argentina SA', url: '/api/acciones/teco2.ba'},
 			'ts.ba':	{simbolo: 'TS', nombre: 'Tenaris SA', url: '/api/acciones/ts.ba'},
 			'ypfd.ba':	{simbolo: 'YPFD', nombre: 'YPF Sociedad Anonima', url: '/api/acciones/ypfd.ba'}
+		},
+		Uso:{
+			ModoDeUso: 'Por cada accion se puede especificar los campos con el parametro campos. Cada valor debe ser separado por coma (,)',
+			Ejemplo: '/api/acciones/ypfd.ba?campos=simbolo,ultimaCotizacion'
 		}
 	}
 
