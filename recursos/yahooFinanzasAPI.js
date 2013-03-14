@@ -28,6 +28,8 @@
  *
  */ 
 
+funcionesHTTP=require('./funcionesHTTP.js')
+
 //	CONSTANTES
 //
 
@@ -63,7 +65,6 @@ parametro={
 	formato:	'f'
 }
 
-// TO-DO: asociar cada valor a una funcion de conversion/tratamiento: fechas en formato local, valores a numero,strings tal vez requieran trim(),etc..
 //Valores que se le pueden solicitar a la API
 //Faltan mas
 formato={
@@ -123,10 +124,16 @@ function procesarFecha(cadena){
 	return fecha[1]+'/'+fecha[0]+'/'+fecha[2];
 }
 
-// TO-DO:	* Llevar la hora a la del Huso Horario,
-//			* Eliminar PM/AM -> 24HS
+// TO-DO: verificar si Huso Horario se calcula con +1
 function procesarHora(cadena){
-	return cadena.trim();
+	cadena= cadena.trim();
+
+	//Si posee el pm le sumo 12hs + 1 para calcular el Huso Horario para Argentina: 
+	if(cadena.indexOf('pm')>0){
+		hora=cadena.split(':')
+		cadena=(parseInt(hora[0])+12 + 1)+':'+hora[1]
+	}
+	return cadena.replace(/(am|pm)/g,'')
 }
 //Elimina el '.BA' del simbolo
 function procesarSimbolo(cadena){
@@ -167,24 +174,7 @@ function procesarRespuestaSegunFormato(respuesta,formato){
 		//Genero la respuesta
 		respuesta=respuesta.replace(/["%]/g,'')
 		campos=respuesta.split(',');
-		
-		//debo cambiar el formato de la fecha: mm/dd/aaaa -> dd/mm/aaaa
-		//~ camposFecha= campos[7].split('/');
-		//~ 
-		//~ accion={
-			//~ simbolo:				campos[0].replace('.BA',''),
-			//~ nombre:					campos[1],
-			//~ descripcion:			accion.nombre,
-			//~ ultimaCotizacion:		funcionesDeServicios.convertirEnFloat(campos[2]),
-			//~ variacion:				funcionesDeServicios.convertirEnFloat(campos[3]),
-			//~ variacionEnPorcentaje:	funcionesDeServicios.convertirEnFloat(campos[4]),
-			//~ valorDeApertura:		funcionesDeServicios.convertirEnFloat(campos[5]),
-			//~ valorCierreAnterior:	funcionesDeServicios.convertirEnFloat(campos[6]),
-			//~ fecha:					camposFecha[1]+'/'+camposFecha[0]+'/'+camposFecha[2],
-			//~ hora:					campos[8].trim(),
-			//~ fuente:					yahooFinanzas.fuente
-		//~ }
-		
+
 		//Objeto respuesta
 		accion={}
 
