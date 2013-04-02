@@ -19,7 +19,7 @@
 // MA 02110-1301, USA.
 
 cheerio=require('cheerio')
-xml2js=require('xml2js')
+
 util=require('util');
 
 
@@ -29,6 +29,7 @@ funcionesHTTP=require('../recursos/funcionesHTTP.js')
 yahooFinanzas=require('../recursos/yahooFinanzasAPI.js')
 futbolParaTodos=require('../recursos/futbolParaTodosAPI.js')
 personalArgentina=require('../recursos/personalArgentinaAPI.js')
+gmailNoLeidos=require('../recursos/gmailNoLeidosAPI.js')
 
 //	CONSTANTES
 //
@@ -190,50 +191,23 @@ exports.accionesRaiz=function(req,res){
 // @estado:			Borrador
 exports.gmail=function(req,res){
 	if(req.params.usuarioPassword){
-		usuario=req.params.usuarioPassword.split(':')[0];
-		password=req.params.usuarioPassword.split(':')[1];
+		campos=req.params.usuarioPassword.split(':');
+		//~ password=req.params.usuarioPassword.split(':')[1];
 		
-		funcionesHTTP.peticionGET(req,res,'https://'+req.params.usuarioPassword+'@mail.google.com/mail/feed/atom',function(respuesta){
+		//try para validar la cuenta...
+		try{
+			cuenta=gmailNoLeidos.cuentaDeGmail(campos[0],campos[1]);
 
-			xml2js.parseString(respuesta,function(err,resultado){
-				cuentaGmail={
-					usuario:	(usuario.indexOf("@")==-1)?usuario+'@gmail.com':usuario,
-					cantidad:	parseInt(resultado.feed.fullcount[0])
-				}
+			gmailNoLeidos.obtenerMailsNoLeidos(req,res,cuenta,function(respuesta){
+				
+				respuesta.fuente=gmailNoLeidos.fuente;
 
-				if(cuentaGmail.cantidad > 0){
-					//proceso los mails
-					cuentaGmail.mails=[];
-					
-					mailsNoLeidos=resultado.feed.entry;
-					for (i=0;i< mailsNoLeidos.length;i++){
-						fecha=new Date(mailsNoLeidos[i].issued[0]);
-						
-						mail={}
-						
-						
-						mail.asunto=mailsNoLeidos[i].title[0];
-						mail.resumen=mailsNoLeidos[i].summary[0];
-						
-						mail.fecha={}
-						mail.fecha.dia=fecha.getDate()+'/'+fecha.getMonth()+'/'+fecha.getFullYear();
-						mail.fecha.hora=fecha.getHours()+':'+fecha.getMinutes();	//Hora Argentina (Server)
-						
-						mail.autor={}
-						mail.autor.nombre=mailsNoLeidos[i].author[0].name[0];
-						mail.autor.mail=mailsNoLeidos[i].author[0].email[0];
-						
-						mail.link=mailsNoLeidos[i].link[0].$.href;
-						
-						cuentaGmail.mails.push(mail);
-					}
-				}				
-				cuentaGmail.fuente={nombre:	'Gmail',	url: 'http://www.gmail.com/'}
-
-				funcionesDeServicios.selectorDeFormato(req,res,cuentaGmail);
+				funcionesDeServicios.selectorDeFormato(req,res,respuesta);
 			});
-
-		});
+		}
+		catch(error){
+			funcionesDeServicios.enviarError(req,res,'Error con los datos de la cuenta '+req.params.usuarioPassword+': '+error,404)
+		}
 	}
 	else{
 		funcionesDeServicios.enviarError(req,res,'Error al enviar la cuenta '+req.params.usuarioPassword,404)
