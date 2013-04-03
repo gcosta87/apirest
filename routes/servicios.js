@@ -18,11 +18,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 // MA 02110-1301, USA.
 
-cheerio=require('cheerio')
-
-util=require('util');
-
-
 funcionesDeServicios=require('../recursos/funcionesDeServicios.js')
 funcionesHTTP=require('../recursos/funcionesHTTP.js')
 
@@ -30,20 +25,13 @@ yahooFinanzas=require('../recursos/yahooFinanzasAPI.js')
 futbolParaTodos=require('../recursos/futbolParaTodosAPI.js')
 personalArgentina=require('../recursos/personalArgentinaAPI.js')
 gmailNoLeidos=require('../recursos/gmailNoLeidosAPI.js')
+ambitoFinanciero=require('../recursos/ambitoFinancieroAPI.js')
 
 //	CONSTANTES
 //
-tipoDeDivisas={
-	dolar:  			{elementoHTML:'.columna1',nombre:'Dolar Oficial'},
-	dolarBlue:  		{elementoHTML:'.columna2',nombre:'Dolar Blue (Informal)'},
-	dolarMayorista:	{elementoHTML:'.columna3',nombre:'Dolar Mayorista (Bancos)'}
-}
-
-
 
 //	FUNCIONES PRIVADAS
 //
-
 
 //	FUNCIONES PUBLICAS
 //
@@ -52,41 +40,15 @@ tipoDeDivisas={
 // @descripción:	Devuelve el valor de los diversas divisas: Dolar Ofical,Dolar Blue/Informal, Dolar Mayorista, Euro, Real,etc.... Fuente Ambito Financiero. Falta
 // @estado:			Borrador: Solo soporta los distintos Dolares, faltan las restantes divisas.
 exports.divisas=function(req,res){
-	divisa=tipoDeDivisas[req.params.divisa];
+	divisa=ambitoFinanciero.tipoDeDivisas[req.params.divisa];
 	
 	if(divisa){
-		funcionesHTTP.peticionGET(req,res,'http://ambito.com/economia/mercados/monedas/dolar/',function(respuesta){			
-			$=cheerio.load(respuesta)
+		ambitoFinanciero.obtenerCotizacionDeDivisa(req,res,divisa,function(objetoDivisa){
+			objetoDivisa.fuente=ambitoFinanciero.fuente;
 			
-			//Obtengo los valores
-			// TO-DO:	Optimizar las consultas. Averguar de setar "root"
-			dolarVariacion=$('.variacion',divisa.elementoHTML).text()
-			dolarCompra=$('.ultimo big',divisa.elementoHTML).text()
-			dolarVenta=$('.cierreAnterior big',divisa.elementoHTML).text()
-			ultimaActualizacion=$('.dolarFecha big',divisa.elementoHTML).text()
-		
-			camposUltimaActualizacion=ultimaActualizacion.split('-');
-			dia=camposUltimaActualizacion[0].trim();
-			hora=camposUltimaActualizacion[1].trim();
-			
-		
-			// Construyo el objeto de respuesta
-			objetoDivisa={
-				nombre:			divisa.nombre,
-				venta:			funcionesDeServicios.convertirEnFloat(dolarVenta),
-				compra:			funcionesDeServicios.convertirEnFloat(dolarCompra),
-				variacion:		funcionesDeServicios.convertirEnFloat(dolarVariacion),
-				ultimaActualizacion:	{dia: dia,hora: hora},						
-				fuente:{
-						nombre:		'Ambito.com',
-						url:		'http://www.ambito.com'								
-					}
-			};
-			
-			// Envio la respuesta al usuario segun el formato que el haya elegido		
+			// Envio la respuesta 
 			funcionesDeServicios.selectorDeFormato(req,res,objetoDivisa)
 		});
-		
 	}
 	else{
 		funcionesDeServicios.enviarError(req,res,'No existe la divisa solicitada: '+req.params.divisa,404)
@@ -102,6 +64,8 @@ exports.divisasRaiz=function(req,res){
 		descripcion: "Consulte las principales divisas",
 		documentacion: "/api/divisas/",
 		divisas:{
+			euro:			{nombre:tipoDeDivisas.dolar.nombre, url:'/api/divisas/euro'},
+			real:			{nombre:tipoDeDivisas.dolar.nombre, url:'/api/divisas/real'},
 			dolar:			{nombre:tipoDeDivisas.dolar.nombre, url:'/api/divisas/dolar'},
 			dolarBlue:		{nombre:tipoDeDivisas.dolarBlue.nombre, url:'/api/divisas/dolarBlue'},
 			dolarMayorista:	{nombre:tipoDeDivisas.dolarMayorista.nombre, url:'/api/divisas/dolarMayorista'}
