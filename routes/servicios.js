@@ -64,8 +64,15 @@ exports.divisasRaiz=function(req,res){
 		descripcion: "Consulte las principales divisas",
 		documentacion: "/api/divisas/",
 		divisas:{
-			euro:			{nombre:tipoDeDivisas.dolar.nombre, url:'/api/divisas/euro'},
-			real:			{nombre:tipoDeDivisas.dolar.nombre, url:'/api/divisas/real'},
+			euro:			{nombre:tipoDeDivisas.euro.nombre, url:'/api/divisas/euro'},
+			real:			{nombre:tipoDeDivisas.real.nombre, url:'/api/divisas/real'},
+			pesoUruguayo:	{nombre:tipoDeDivisas.pesoUruguayo.nombre, url:'/api/divisas/pesoUruguayo'},
+			pesoChileno:	{nombre:tipoDeDivisas.pesoChileno.nombre, url:'/api/divisas/pesoChileno'},
+			boliviano:		{nombre:tipoDeDivisas.boliviano.nombre, url:'/api/divisas/boliviano'},
+			guarani:		{nombre:tipoDeDivisas.guarani.nombre, url:'/api/divisas/guarani'},
+			libra:			{nombre:tipoDeDivisas.libra.nombre, url:'/api/divisas/libra'},
+			yen:			{nombre:tipoDeDivisas.yen.nombre, url:'/api/divisas/yen'},
+			dolarCanadiense:{nombre:tipoDeDivisas.dolarCanadiense.nombre, url:'/api/divisas/dolarCanadiense'},
 			dolar:			{nombre:tipoDeDivisas.dolar.nombre, url:'/api/divisas/dolar'},
 			dolarBlue:		{nombre:tipoDeDivisas.dolarBlue.nombre, url:'/api/divisas/dolarBlue'},
 			dolarMayorista:	{nombre:tipoDeDivisas.dolarMayorista.nombre, url:'/api/divisas/dolarMayorista'}

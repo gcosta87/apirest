@@ -32,13 +32,19 @@ URL_DIVISAS="http://www.ambito.com/economia/mercados/monedas/"
 
 exports.fuente={ nombre: 'Ambito.com', url: 'http://www.ambito.com'	}
 
-
 //Divisas Soportadas. Se proveen de los datos requeridos para su procesamiento
 tipoDeDivisas={
 	euro:  			{nombre:'Euro', url:URL_DIVISAS+'euro/'},
 	real:  			{nombre:'Real', url:URL_DIVISAS+'info/?ric=BRL=X'},	
-	dolar:  			{nombre:'Dolar Oficial', url:URL_DIVISAS+'dolar/info/?ric=ARSSCBCRA'},
-	dolarBlue:  		{nombre:'Dolar Blue (Informal)',url:URL_DIVISAS+'dolar/info/?ric=ARSB='},
+	pesoUruguayo:	{nombre:'Peso Uruguayo', url:URL_DIVISAS+'info/?ric=UYU=X'},	
+	pesoChileno:	{nombre:'Peso Chileno', url:URL_DIVISAS+'info/?ric=CLP=X'},	
+	boliviano:		{nombre:'Boliviano', url:URL_DIVISAS+'info/?ric=BOB=X'},	
+	guarani:		{nombre:'Guaraní', url:URL_DIVISAS+'info/?ric=PYG=X'},	
+	libra: 			{nombre:'Libra Esterlina', url:URL_DIVISAS+'info/?ric=GBP=X'},	
+	yen: 			{nombre:'Yen', url:URL_DIVISAS+'info/?ric=JPY=X'},	
+	dolarCanadiense:{nombre:'Dolar Canadiense', url:URL_DIVISAS+'info/?ric=CAD=X'},	
+	dolar: 			{nombre:'Dolar Oficial', url:URL_DIVISAS+'dolar/info/?ric=ARSSCBCRA'},
+	dolarBlue: 		{nombre:'Dolar Blue (Informal)',url:URL_DIVISAS+'dolar/info/?ric=ARSB='},
 	dolarMayorista:	{nombre:'Dolar Mayorista (Bancos)',url:URL_DIVISAS+'dolar/info/?ric=ARSIB='}
 }
 
